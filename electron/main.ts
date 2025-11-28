@@ -3,6 +3,9 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+import "./database";
+import "./ipc";
+
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,7 +48,7 @@ function createWindow() {
 		win.loadURL(VITE_DEV_SERVER_URL);
 	} else {
 		// win.loadFile('dist/index.html')
-		win.loadFile(path.join(RENDERER_DIST, "index.html"));
+		win.loadFile(path.join(__dirname, '../dist/index.html')); //win.loadFile(path.join(RENDERER_DIST, "index.html"));
 	}
 }
 
