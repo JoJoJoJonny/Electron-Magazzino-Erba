@@ -2,13 +2,19 @@ import { ipcRenderer, contextBridge } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
+  on(channel: string, func: (...args: any[]) => void) {
+    // La funzione di sottoscrizione nasconde l'oggetto 'event' di Electron
+    const subscription = (_event: Electron.IpcRendererEvent, ...args: any[]) => func(...args);
+
+    // Registra il listener
+    ipcRenderer.on(channel, subscription);
+
+    // Ritorna la funzione di sottoscrizione creata. ESSENZIALE per poterla rimuovere.
+    return subscription;
   },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
+  off(channel: string, subscription: (...args: any[]) => void) {
+    // Rimuove la sottoscrizione (la funzione specifica) dal canale
+    ipcRenderer.removeListener(channel, subscription);
   },
   send(...args: Parameters<typeof ipcRenderer.send>) {
     const [channel, ...omit] = args

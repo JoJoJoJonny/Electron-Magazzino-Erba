@@ -12,6 +12,7 @@ const externalDependencies = ['electron', 'better-sqlite3']; // <-- AGGIUNTO bet
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     electron({

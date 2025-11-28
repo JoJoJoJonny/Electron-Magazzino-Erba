@@ -2,7 +2,7 @@
   "directories": {
     "output": "release"
   },
-  "appId": "com.electron.react.tailwind",
+  "appId": "prova1",
   "mac": {
     "target": [
       "dmg",
@@ -24,5 +24,5 @@
     ],
     "category": "Utility"
   },
-  "productName": "MagazzinoErba v0.0.0"
+  "productName": "prova1 v0.0.0"
 }

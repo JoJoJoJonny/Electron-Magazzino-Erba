@@ -1,6 +1,6 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, protocol, session} from "electron";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 
 import "./database";
@@ -8,6 +8,19 @@ import "./ipc";
 
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+protocol.registerSchemesAsPrivileged([
+	{
+		scheme: 'app',
+		privileges: {
+			standard: true,
+			secure: true,
+			supportFetchAPI: true,
+			allowServiceWorkers: true,
+			corsEnabled: true
+		}
+	}
+]);
 
 // The built directory structure
 //
@@ -29,6 +42,19 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 	? path.join(process.env.APP_ROOT, "public")
 	: RENDERER_DIST;
 
+app.whenReady().then(() => {
+	// Registra un'intestazione CSP che bypassa tutte le restrizioni per le risorse locali
+	session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+		callback({
+			responseHeaders: {
+				...details.responseHeaders,
+				'Content-Security-Policy': ['default-src \'self\' \'unsafe-inline\' data:;'],
+				'X-Content-Security-Policy': ['default-src \'self\' \'unsafe-inline\' data:;'],
+			}
+		});
+	});
+});
+
 let win: BrowserWindow | null;
 
 function createWindow() {
@@ -36,6 +62,9 @@ function createWindow() {
 		icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
 		webPreferences: {
 			preload: path.join(__dirname, "preload.mjs"),
+			contextIsolation: true,
+			//sandbox: false,
+			//webSecurity: false,
 		},
 	});
 
@@ -48,7 +77,26 @@ function createWindow() {
 		win.loadURL(VITE_DEV_SERVER_URL);
 	} else {
 		// win.loadFile('dist/index.html')
-		win.loadFile(path.join(__dirname, '../dist/index.html')); //win.loadFile(path.join(RENDERER_DIST, "index.html"));
+
+		//win.loadFile(path.join(RENDERER_DIST, "index.html"));
+		//win.loadFile(path.join(__dirname, '../dist/index.html'));
+		//win.loadFile(path.join(app.getAppPath(), 'dist', 'index.html'));
+
+		// 1. Definisce il percorso di sistema assoluto (app.getAppPath() è la radice dell'ASAR).
+		//const indexPath = path.join(app.getAppPath(), 'dist', 'index.html');
+
+		// 2. Converte il percorso di sistema in un URL file:// corretto (gestisce Windows paths).
+		//const fileUrl = pathToFileURL(indexPath).toString();
+
+		// 3. Carica l'URL formattato con loadURL.
+		//win.loadURL(fileUrl);
+
+		//win.loadURL(`app://./dist/index.html`);
+
+		const indexPath = path.join(app.getAppPath(), 'dist', 'index.html');
+		const fileUrl = pathToFileURL(indexPath).toString();
+
+		win.loadURL(fileUrl);
 	}
 }
 
