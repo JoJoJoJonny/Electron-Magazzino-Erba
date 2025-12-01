@@ -202,7 +202,7 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
                         {/* RIGHE MODIFICATE: Applica highlightMatch a tutte le celle */}
                         <td className="py-2 px-4">{highlightMatch(c.cod)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.descrizione)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.prezzo.toString())}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.prezzo.toString())}€</td>
                     </tr>
                 ))}
                 {/* NUOVO BLOCCO: Messaggio se la ricerca non trova nulla */}

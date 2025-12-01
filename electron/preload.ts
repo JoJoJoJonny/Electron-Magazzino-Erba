@@ -35,10 +35,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Funzione generica per leggere tutti i dati di una tabella
   getAll: (tableName: string) => ipcRenderer.invoke('db-get-all', tableName),
 
-  // Funzioni specifiche per i clienti
+  // CRUD - clienti
   insertCliente: (data: any) => ipcRenderer.invoke('db-insert-cliente', data),
   updateCliente: (data: any) => ipcRenderer.invoke('db-update-cliente', data),
-  deleteCliente: (id: any) => ipcRenderer.invoke('db-delete-cliente', id)
+  deleteCliente: (id: any) => ipcRenderer.invoke('db-delete-cliente', id),
+  // CRUD - articoli
+  insertArticolo: (data: any) => ipcRenderer.invoke('db-insert-articolo', data),
+  updateArticolo: (data: any) => ipcRenderer.invoke('db-update-articolo', data),
+  deleteArticolo: (id: any) => ipcRenderer.invoke('db-delete-articolo', id),
 
   // TODO: Altre API andranno qui (es. insertProdotto, updateProdotto, ecc.)
 });

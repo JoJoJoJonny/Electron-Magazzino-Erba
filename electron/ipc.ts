@@ -124,3 +124,115 @@ ipcMain.handle('db-delete-cliente', (_event, idCliente) => {
         return { error: `Errore database: ${errorMessage}` };
     }
 });
+
+
+
+
+
+
+
+ipcMain.handle('db-insert-articolo', (_event, datiArticolo) => {
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO articoli (cod, descrizione, prezzo)
+            VALUES (@cod, @descrizione, @prezzo)
+        `);
+
+        const info = stmt.run(datiArticolo);
+        // Segnala al processo di rendering che i dati degli articoli devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-articoli', { status: 'success' });
+        }
+
+        return { success: true, message: 'Articolo inserito', lastInsertRowid: info.lastInsertRowid };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'inserimento dell'articolo:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. cod duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Il COD specificato (chiave primaria) esiste già." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-update-articolo', (_event, datiArticoloAggiornati) => {
+    // datiArticoloAggiornato contiene { id: number, cod: string, descrizione: string, ...}
+    try {
+        const stmt = db.prepare(`
+            UPDATE articoli 
+            SET cod = @cod, 
+                descrizione = @descrizione, 
+                prezzo = @prezzo
+            WHERE ROWID = @id
+        `);
+
+        // Esegui l'aggiornamento.
+        // L'oggetto datiArticoloAggiornati deve contenere tutti i campi (@cod, @descrizione, ...)
+        // e l'ID (@id) per la clausola WHERE.
+        const info = stmt.run(datiArticoloAggiornati);
+
+        if (info.changes === 0) {
+            return { error: "Nessun articolo trovato con l'ID specificato o nessun dato è stato modificato." };
+        }
+
+        // Segnala al processo di rendering che i dati degli articoli devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-articoli', { status: 'success' });
+        }
+
+        return { success: true, message: 'Articolo aggiornato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'aggiornamento dell'articolo:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. COD duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Il COD specificato (chiave primaria) esiste già in un altro record." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-delete-articolo', (_event, idArticolo) => {
+    // idArticolo è il valore 'id' (ROWID) dell'articolo da eliminare
+    try {
+        const stmt = db.prepare(`
+            DELETE FROM articoli 
+            WHERE ROWID = @id
+        `);
+
+        // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+        // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+        const info = stmt.run({ id: idArticolo });
+
+        if (info.changes === 0) {
+            return { error: "Nessun articolo trovato con l'ID specificato per l'eliminazione." };
+        }
+
+        // Segnala al processo di rendering che i dati degli articoli devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-articoli', { status: 'success' });
+        }
+
+        return { success: true, message: 'Articolo eliminato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione dell'articolo:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare l'articolo: sono presenti prodotti/documenti collegati a questo ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});

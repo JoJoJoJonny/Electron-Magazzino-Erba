@@ -86,7 +86,8 @@ const AddArticleModal: React.FC<AddArticleModalProps> = ({ isOpen, onClose }) =>
                         <label htmlFor="prezzo" className="block text-sm font-medium text-gray-700">Prezzo *</label>
                         <input
                             id="prezzo"
-                            type="real"
+                            type="number"
+                            step="0.01"
                             {...register("prezzo", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
@@ -261,7 +262,8 @@ const EditArticleModal: React.FC<EditArticleModalProps> = ({
                         <label htmlFor="prezzo" className="block text-sm font-medium text-gray-700">Prezzo *</label>
                         <input
                             id="prezzo"
-                            type="real"
+                            type="number"
+                            step="0.01"
                             {...register("prezzo", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />

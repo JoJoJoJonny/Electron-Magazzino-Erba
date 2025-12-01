@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
 import { Clienti } from "@/pages/clienti";
-//import { Articoli } from "@/pages/articoli";
+import { Articoli } from "@/pages/articoli";
 //import { Prodotti } from "@/pages/prodotti";
 //import { Attrezzature } from "@/pages/attrezzature";
 //import { Transazioni } from "@/pages/transazioni";
@@ -15,8 +15,8 @@ export default function App() {
                 <div className="flex-1 overflow-auto bg-gray-50 p-4">
                     <Routes>
                         <Route path="/clienti" element={<Clienti />} />
-                        {/*<Route path="/articoli" element={<Articoli />} />
-                        <Route path="/prodotti" element={<Prodotti />} />
+                        <Route path="/articoli" element={<Articoli />} />
+                        {/*<Route path="/prodotti" element={<Prodotti />} />
                         <Route path="/attrezzature" element={<Attrezzature />} />
                         <Route path="/transazioni" element={<Transazioni />} />
                         <Route path="/statistiche" element={<Statistiche />} />
