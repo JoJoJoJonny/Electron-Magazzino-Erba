@@ -353,6 +353,60 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
 };
 
 
+// --- NUOVO COMPONENTE: MODALE DI CONFERMA ---
+
+interface ConfirmationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    message: string;
+    title: string;
+    confirmButtonText: string;
+    confirmButtonColor: string; // Tailwind class
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+                                                                 isOpen,
+                                                                 onClose,
+                                                                 onConfirm,
+                                                                 message,
+                                                                 title,
+                                                                 confirmButtonText,
+                                                                 confirmButtonColor
+                                                             }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[100]">
+            <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm transform transition-all">
+                <h3 className="text-xl font-bold mb-3 text-red-600 border-b pb-2">{title}</h3>
+                <p className="text-gray-700 mb-6">{message}</p>
+
+                <div className="flex justify-end space-x-3">
+                    {/* Bottone ANNULLA */}
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+                    >
+                        Annulla
+                    </button>
+
+                    {/* Bottone CONFERMA */}
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        className={`px-4 py-2 text-sm font-medium text-white ${confirmButtonColor} rounded-lg shadow-md hover:${confirmButtonColor.replace('-600', '-700')} transition`}
+                    >
+                        {confirmButtonText}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 
 
 import TabellaClienti from '@/components/tabellaClienti';
@@ -369,6 +423,9 @@ export const Clienti = () => {
 
     // NUOVO STATO: Messaggio di stato globale (per errori/successo operazioni)
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' | 'info' } | null>(null);
+
+    // NUOVO STATO: Stato per controllare l'apertura/chiusura del modale di CONFERMA eliminazione
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
     // Funzione per gestire la selezione di un cliente
     const handleClientSelect = (client: ClienteRecord | null) => {
@@ -438,22 +495,26 @@ export const Clienti = () => {
         setMessage(null); // Pulisce il messaggio di stato
     };
 
-    // LOGICA PER L'ELIMINAZIONE (NUOVO BLOCCO)
-    const handleDelete = async () => {
+    // NUOVO STATO INTERMEDIO per l'eliminazione.
+    const handleDelete = () => {
         if (!selectedClient || !selectedClient.id) {
             setMessage({ text: "Nessun cliente valido selezionato per l'eliminazione.", type: 'error' });
             return;
         }
 
-        // **USO DEL MODAL CUSTOM:** Chiedi conferma all'utente (temporaneamente con window.confirm)
-        if (!window.confirm(`Sei sicuro di voler eliminare il cliente: ${selectedClient.nome} (ID: ${selectedClient.id})? Quest'azione è irreversibile.`)) {
-            // Se l'utente annulla
-            return;
-        }
+        // APRI IL MODALE DI CONFERMA (NON BLOCCHIAMO PIÙ IL THREAD)
+        setIsConfirmModalOpen(true);
+    };
+
+    // NUOVA FUNZIONE: Esegue l'eliminazione solo DOPO LA CONFERMA nel modale.
+    const confirmDelete = async () => {
+        setIsConfirmModalOpen(false); // Chiudi il modale subito
+
+        // Protezione aggiuntiva
+        if (!selectedClient || !selectedClient.id) return;
 
         try {
             // Chiama la funzione IPC passando solo l'ID (ROWID)
-            // Usiamo window.electronAPI.deleteCliente (esposto nel preload.ts)
             const result = await window.electronAPI.deleteCliente(selectedClient.id);
 
             if (result && 'error' in result) {
@@ -574,6 +635,19 @@ export const Clienti = () => {
                     onClose={closeEditModal}
                     clientToEdit={selectedClient}
                     forceRefresh={forceRefresh}
+                />
+            )}
+
+            {/* NUOVO BLOCCO: Modale di conferma eliminazione non bloccante */}
+            {selectedClient && (
+                <ConfirmationModal
+                    isOpen={isConfirmModalOpen}
+                    onClose={() => setIsConfirmModalOpen(false)}
+                    onConfirm={confirmDelete}
+                    title="Conferma Eliminazione Cliente"
+                    message={`Sei sicuro di voler eliminare definitivamente il cliente "${selectedClient.nome}" (ID: ${selectedClient.id})? Quest'azione non può essere annullata.`}
+                    confirmButtonText="Sì, Elimina"
+                    confirmButtonColor="bg-red-600"
                 />
             )}
         </div>

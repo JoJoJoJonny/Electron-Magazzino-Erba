@@ -5,7 +5,7 @@ import Logo from "@/assets/logo nuovo.png";
 
 const menuItems = [
     { name: "Clienti", path: "/clienti" },
-    { name: "Modelli", path: "/modelli" },
+    { name: "Articoli", path: "/articoli" },
     { name: "Prodotti", path: "/prodotti" },
     { name: "Attrezzature", path: "/attrezzature" },
     { name: "Transazioni", path: "/transazioni" },

@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-// Importiamo l'interfaccia ClienteRecord dal componente padre
-import { ClienteRecord } from '@/pages/clienti';
+// Importiamo l'interfaccia ArticoloRecord dal componente padre
+import { ArticoloRecord } from '@/pages/articoli';
 
-// Definisci le props che riceverà TabellaClienti dal genitore
-interface TabellaClientiProps {
-    // Funzione chiamata quando un cliente viene selezionato (o deselezionato)
-    onClientSelect: (client: ClienteRecord | null) => void;
-    // Il cliente attualmente selezionato (per evidenziazione e confronto)
-    selectedClient: ClienteRecord | null;
+// Definisci le props che riceverà TabellaArticoli dal genitore
+interface TabellaArticoliProps {
+    // Funzione chiamata quando un articolo viene selezionato (o deselezionato)
+    onArticleSelect: (article: ArticoloRecord | null) => void;
+    // Il articolo attualmente selezionato (per evidenziazione e confronto)
+    selectedArticle: ArticoloRecord | null;
     // NUOVA RIGA: Termine di ricerca ricevuto dal componente padre
     searchTerm: string;
 }
 
 // NUOVO BLOCCO: Interfacce per la gestione dell'ordinamento
-type SortKey = keyof ClienteRecord | 'id'; // Le chiavi su cui possiamo ordinare
+type SortKey = keyof ArticoloRecord | 'id'; // Le chiavi su cui possiamo ordinare
 type SortDirection = 'ascending' | 'descending' | null;
 
 interface SortConfig {
@@ -22,10 +22,10 @@ interface SortConfig {
 }
 
 // MODIFICA DELLA RIGA:
-const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selectedClient, searchTerm }) => {
-    // Utilizziamo l'interfaccia corretta ClienteRecord
-// ...    // Utilizziamo l'interfaccia corretta ClienteRecord
-    const [clienti, setClienti] = useState<ClienteRecord[]>([]);
+const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, selectedArticle, searchTerm }) => {
+    // Utilizziamo l'interfaccia corretta ArticoloRecord
+// ...    // Utilizziamo l'interfaccia corretta ArticoloRecord
+    const [articoli, setArticoli] = useState<ArticoloRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -50,13 +50,13 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
     };
 
     // Gestisce il click sulla riga
-    const handleRowClick = (client: ClienteRecord) => {
-        // Se il cliente cliccato è già selezionato, deselezionalo
-        if (selectedClient && selectedClient.id === client.id) {
-            onClientSelect(null);
+    const handleRowClick = (article: ArticoloRecord) => {
+        // Se il articolo cliccato è già selezionato, deselezionalo
+        if (selectedArticle && selectedArticle.id === article.id) {
+            onArticleSelect(null);
         } else {
-            // Altrimenti, seleziona questo cliente
-            onClientSelect(client);
+            // Altrimenti, seleziona questo articolo
+            onArticleSelect(article);
         }
     };
 
@@ -89,18 +89,18 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
         );
     };
 
-    const fetchClienti = async () => {
+    const fetchArticoli = async () => {
         setLoading(true);
         setError(null);
         try {
             // Chiama la funzione esposta nel preload script
-            const result = await window.electronAPI.getAll('clienti');
+            const result = await window.electronAPI.getAll('articoli');
 
             if (result && 'error' in result) {
                 setError(result.error);
             } else if (Array.isArray(result)) {
-                // Il casting corretto è a ClienteRecord[]
-                setClienti(result as ClienteRecord[]);
+                // Il casting corretto è a ArticoloRecord[]
+                setArticoli(result as ArticoloRecord[]);
             }
         } catch (e) {
             setError("Errore di comunicazione IPC.");
@@ -111,8 +111,8 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
 
     useEffect(() => {
         // Rimuovi ogni selezione attiva quando la tabella viene montata/aggiornata
-        onClientSelect(null);
-        fetchClienti();
+        onArticleSelect(null);
+        fetchArticoli();
         // NOTA: il fetch avviene solo al mount, ma il componente viene rimontato
         // grazie alla 'key' passata dal componente padre (Clienti.tsx)
     }, []);
@@ -121,27 +121,25 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
     if (error) return <p className="p-4 text-red-600">Errore: {error}</p>;
 
     // NUOVO BLOCCO: Logica di filtraggio
-    const filteredClienti = clienti.filter(client => {
+    const filteredArticoli = articoli.filter(article => {
         if (!searchTerm) return true; // Mostra tutto se la ricerca è vuota
 
         // Controlla se il termine di ricerca è incluso, in modo case-insensitive, in:
-        // DDT, P.IVA, Nome, Telefono, Email.
+        // cod, descrizione, prezzo
         const matches = (
-            client.ddt.toUpperCase().includes(searchTerm) ||
-            client.piva.toUpperCase().includes(searchTerm) ||
-            client.nome.toUpperCase().includes(searchTerm) ||
-            (client.telefono || '').toUpperCase().includes(searchTerm) || // Gestisce null/undefined
-            (client.email || '').toUpperCase().includes(searchTerm)
+            article.cod.toUpperCase().includes(searchTerm) ||
+            article.descrizione.toUpperCase().includes(searchTerm) ||
+            article.prezzo.toString().includes(searchTerm)
         );
 
         return matches;
     });
 
     // NUOVO BLOCCO: Logica di Ordinamento
-    let sortedClienti = [...filteredClienti];
+    let sortedArticoli = [...filteredArticoli];
 
     if (sortConfig.key !== null) {
-        sortedClienti.sort((a, b) => {
+        sortedArticoli.sort((a, b) => {
             const aValue = String(a[sortConfig.key!]).toUpperCase();
             const bValue = String(b[sortConfig.key!]).toUpperCase();
 
@@ -162,11 +160,9 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
                 <tr>
                     {/* Definiamo i campi ordinabili e il testo da mostrare */}
                     {([
-                        { key: 'ddt', label: 'DDT' },
-                        { key: 'piva', label: 'P.Iva' },
-                        { key: 'nome', label: 'Nome' },
-                        { key: 'telefono', label: 'Telefono' },
-                        { key: 'email', label: 'Email' },
+                        { key: 'cod', label: 'COD' },
+                        { key: 'descrizione', label: 'Descrizione' },
+                        { key: 'prezzo', label: 'Prezzo' },
                     ] as { key: SortKey, label: string }[]).map(({ key, label }) => (
                         <th
                             key={key}
@@ -193,26 +189,24 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
                 </tr>
                 </thead>
                 <tbody>
-                {/* RIGA MODIFICATA: Mappa i clienti ordinati */}
-                {sortedClienti.map((c) => (
+                {/* RIGA MODIFICATA: Mappa i articoli ordinati */}
+                {sortedArticoli.map((c) => (
                     <tr
                         key={c.id}
                         onClick={() => handleRowClick(c)} // Aggiungi l'handler di click
                         className={`border-b cursor-pointer transition 
-                            ${selectedClient && selectedClient.id === c.id
+                            ${selectedArticle && selectedArticle.id === c.id
                             ? 'bg-yellow-100 border-yellow-400 font-semibold' // Evidenzia se selezionato
                             : 'hover:bg-gray-50'}`} // Classe standard
                     >
                         {/* RIGHE MODIFICATE: Applica highlightMatch a tutte le celle */}
-                        <td className="py-2 px-4">{highlightMatch(c.ddt)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.piva)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.nome)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.telefono)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.email)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.cod)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.descrizione)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.prezzo.toString())}</td>
                     </tr>
                 ))}
                 {/* NUOVO BLOCCO: Messaggio se la ricerca non trova nulla */}
-                {filteredClienti.length === 0 && searchTerm && (
+                {filteredArticoli.length === 0 && searchTerm && (
                     <tr>
                         <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
                             Nessun risultato trovato per "{searchTerm}"
@@ -226,4 +220,4 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
     );
 };
 
-export default TabellaClienti;
+export default TabellaArticoli;
