@@ -10,6 +10,10 @@ console.log(`Database connected at: ${dbPath}`);
 
 // Funzione per inizializzare le tabelle
 function initDatabase() {
+    db.exec(
+        `PRAGMA foreign_keys = ON;`
+    );
+
     // Tabella Clienti
     db.exec(`
     CREATE TABLE IF NOT EXISTS clienti (
@@ -27,12 +31,16 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ddtCliente TEXT,
       codArticolo TEXT,
-      quantitò INTEGER,
-      data_produzione DATETIME DEFAUL CURRENT_TIMESTAMP,
+      quantità INTEGER,
+      data_produzione DATETIME DEFAULT CURRENT_TIMESTAMP,
       valore REAL,
       stoccaggio TEXT,
-      FOREIGN KEY (ddtCliente) REFERENCES cliente(ddt),
-      FOREIGN KEY (codArticolo) REFERENCES articolo(cod)
+      FOREIGN KEY (ddtCliente) REFERENCES clienti(ddt)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+      FOREIGN KEY (codArticolo) REFERENCES articoli(cod)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
     );
   `);
 
@@ -43,8 +51,12 @@ function initDatabase() {
       ddtCliente TEXT,
       codArticolo TEXT,
       stoccaggio TEXT,
-      FOREIGN KEY (ddtCliente) REFERENCES cliente(ddt),
-      FOREIGN KEY (codArticolo) REFERENCES articolo(cod)
+      FOREIGN KEY (ddtCliente) REFERENCES clienti(ddt)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+      FOREIGN KEY (codArticolo) REFERENCES articoli(cod)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
     );
   `);
 

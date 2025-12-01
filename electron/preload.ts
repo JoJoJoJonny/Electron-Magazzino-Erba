@@ -35,8 +35,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Funzione generica per leggere tutti i dati di una tabella
   getAll: (tableName: string) => ipcRenderer.invoke('db-get-all', tableName),
 
-  // Funzione specifica per inserire un cliente
+  // Funzioni specifiche per i clienti
   insertCliente: (data: any) => ipcRenderer.invoke('db-insert-cliente', data),
+  updateCliente: (data: any) => ipcRenderer.invoke('db-update-cliente', data),
+  deleteCliente: (id: any) => ipcRenderer.invoke('db-delete-cliente', id)
 
   // TODO: Altre API andranno qui (es. insertProdotto, updateProdotto, ecc.)
 });

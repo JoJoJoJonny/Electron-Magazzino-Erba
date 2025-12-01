@@ -8,7 +8,16 @@ export interface IIpcRenderer {
 
 export interface IElectronAPI {
     getAll: (tableName: string) => Promise<any[] | { error: string }>;
+
+    //CRUD - clienti
     insertCliente: (data: any) => Promise<{ success: boolean, lastInsertRowid?: number } | { error: string }>;
+    updateCliente: (data: any) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
+    deleteCliente: (id: number) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
+
+    // Comunicazione asincrona (per il refresh della tabella)
+    on: (channel: string, listener: (...args: any[]) => void) => () => void;
+    off: (channel: string, listener: (...args: any[]) => void) => void;
+
     // TODO: ... altre API
 }
 
