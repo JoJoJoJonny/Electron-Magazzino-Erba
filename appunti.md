@@ -6,6 +6,11 @@
 - telefono
 - email
 
+## Articoli:
+- cod
+- descrizione
+- prezzo
+
 ## Prodotti:
 - id
 - cliente.ddt
@@ -21,7 +26,6 @@
 - articolo.cod
 - stoccaggio
 
-## Articoli:
-- cod
-- descrizione
-- prezzo
+## Transazioni:
+
+## Statistiche:

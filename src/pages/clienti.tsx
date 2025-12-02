@@ -488,6 +488,11 @@ export const Clienti = () => {
         setSearchTerm(e.target.value.toUpperCase());
     };
 
+    // NUOVA FUNZIONE: Pulisce la barra di ricerca
+    const handleClearSearch = () => {
+        setSearchTerm(''); // Pulisce lo stato
+    };
+
 
     const forceRefresh = () => {
         setRefreshKey(prevKey => prevKey + 1);
@@ -600,13 +605,35 @@ export const Clienti = () => {
                 {/* Spazio per espansione (Spinge gli elementi successivi a destra) */}
                 <div className="flex-grow w-4"></div>
 
-                {/* Gruppo 3: Barra di Ricerca e Filtri (A destra) */}
-                <input
-                    type="text"
-                    placeholder="Cerca per DDT, P.IVA, Nome..."
-                    onChange={handleSearchChange}
-                    className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm w-80 focus:ring-myColor focus:border-myColor transition"
-                />
+                {/* Gruppo 3: Barra di Ricerca */}
+                <div className="relative w-full sm:w-80">
+                    <input
+                        type="text"
+                        // IMPOSTA IL VALORE E GESTISCI IL CAMBIO (Input Controllato)
+                        value={searchTerm.toLowerCase()} // Mostra in minuscolo per una migliore UX
+                        onChange={handleSearchChange}
+                        placeholder="Cerca per DDT, P.IVA, Nome..."
+                        // Aggiungi padding a destra per l'icona
+                        className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm w-full focus:ring-myColor focus:border-myColor transition pr-10"
+                    />
+
+                    {/* Icona "X" per pulire, visibile solo se c'è testo */}
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            onClick={handleClearSearch}
+                            // Posizionamento assoluto in alto a destra
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                            aria-label="Pulisci ricerca"
+                        >
+                            {/* Icona SVG per la "X" */}
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    )}
+                </div>
+                {/* FINE MODIFICA */}
 
             </div>
 

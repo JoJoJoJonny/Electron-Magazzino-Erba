@@ -236,3 +236,145 @@ ipcMain.handle('db-delete-articolo', (_event, idArticolo) => {
         return { error: `Errore database: ${errorMessage}` };
     }
 });
+
+
+
+
+
+
+
+
+ipcMain.handle('db-insert-prodotto', (_event, datiProdotto) => {
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO prodotti (ddtCliente, codArticolo, quantita, dataProduzione, stoccaggio)
+            VALUES (@ddtCliente, @codArticolo, @quantita, @dataProduzione, @stoccaggio)
+        `);
+
+        const info = stmt.run(datiProdotto);
+        // Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-prodotti', { status: 'success' });
+        }
+
+        return { success: true, message: 'Prodotto inserito', lastInsertRowid: info.lastInsertRowid };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'inserimento del prodotto:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. cod duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID specificato (chiave primaria) esiste già." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-update-prodotto', (_event, datiProdottoAggiornati) => {
+    try {
+        const stmt = db.prepare(`
+            UPDATE prodotti 
+            SET ddtCliente = @ddtCliente, 
+                codArticolo = @codArticolo, 
+                quantita = @quantita,
+                dataProduzione = @dataProduzione,
+                stoccaggio = @stoccaggio
+            WHERE ROWID = @id
+        `);
+
+        // Esegui l'aggiornamento.
+        // L'oggetto datiProdottoAggiornati deve contenere tutti i campi
+        // e l'ID (@id) per la clausola WHERE.
+        const info = stmt.run(datiProdottoAggiornati);
+
+        if (info.changes === 0) {
+            return { error: "Nessun prodotto trovato con l'ID specificato o nessun dato è stato modificato." };
+        }
+
+        // Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-prodotti', { status: 'success' });
+        }
+
+        return { success: true, message: 'Prodotto aggiornato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'aggiornamento del prodotto:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. COD duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID specificato (chiave primaria) esiste già in un altro record." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-delete-prodotto', (_event, idProdotto) => {
+    try {
+        const stmt = db.prepare(`
+            DELETE FROM prodotti 
+            WHERE ROWID = @id
+        `);
+
+        // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+        // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+        const info = stmt.run({ id: idProdotto });
+
+        if (info.changes === 0) {
+            return { error: "Nessun prodotto trovato con l'ID specificato per l'eliminazione." };
+        }
+
+        // Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-prodotti', { status: 'success' });
+        }
+
+        return { success: true, message: 'Prodotto eliminato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione del prodotto:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare il prodotto: sono presenti prodotti/documenti collegati a questo ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-get-unique-prodotti-keys', (_event) => {
+    try {
+        // 1. Recupera tutti i DDT unici dalla tabella 'clienti'
+        const ddtResults = db.prepare('SELECT DISTINCT ddt FROM clienti ORDER BY ddt ASC').all();
+        // Mappa i risultati in un semplice array di stringhe
+        const ddtList = ddtResults.map(row => row.ddt);
+
+        // 2. Recupera tutti i COD unici dalla tabella 'articoli'
+        const codArticoloResults = db.prepare('SELECT DISTINCT cod FROM articoli ORDER BY cod ASC').all();
+        // Mappa i risultati in un semplice array di stringhe
+        const codArticoloList = codArticoloResults.map(row => row.cod);
+
+        // Ritorna entrambi gli array
+        return {
+            ddt: ddtList,
+            codArticolo: codArticoloList
+        };
+
+    } catch (error) {
+        console.error("Errore nel recupero delle chiavi uniche per i Datalist:", error);
+        // Ritorna un oggetto di errore con array vuoti per evitare crash
+        return {
+            error: "Impossibile recuperare i dati unici richiesti.",
+            ddt: [],
+            codArticolo: []
+        };
+    }
+});

@@ -31,8 +31,8 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ddtCliente TEXT,
       codArticolo TEXT,
-      quantità INTEGER,
-      data_produzione DATETIME DEFAULT CURRENT_TIMESTAMP,
+      quantita INTEGER,
+      dataProduzione DATETIME DEFAULT CURRENT_TIMESTAMP,
       valore REAL,
       stoccaggio TEXT,
       FOREIGN KEY (ddtCliente) REFERENCES clienti(ddt)
