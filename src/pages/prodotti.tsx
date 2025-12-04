@@ -42,12 +42,14 @@ const DatalistInput: React.FC<DatalistInputProps> = ({ id, label, register, opti
     const focusClasses = "focus:ring-indigo-500 focus:border-indigo-500";
 
     // Funzione di validazione per forzare la selezione rigida
-    const validateSelection = (value: string) => {
+    const validateSelection = (value: string | number) => {
+        const valueString = String(value);
+
         // Se il campo non è obbligatorio e il valore è vuoto, è valido
-        if (!required && value.trim() === '') return true;
+        if (!required && valueString.trim() === '') return true;
 
         // Verifica che il valore sia ESATTAMENTE incluso nell'array delle opzioni
-        const isValid = (options || []).includes(value);
+        const isValid = (options || []).includes(valueString);
 
         return isValid || `${label} deve essere selezionato dall'elenco. Non è permesso inserire nuovi valori.`;
     };
@@ -514,7 +516,7 @@ export const Prodotti = () => {
 
     // NUOVO STATO: Stato per i valori unici DDT e COD Articolo per i suggerimenti
     const [datalistOptions, setDatalistOptions] = useState<{ ddt: string[], codArticolo: string[] }>({ ddt: [], codArticolo: [] });
-    const [isLoadingOptions, setIsLoadingOptions] = useState(true); // Stato di caricamento
+    const [, setIsLoadingOptions] = useState(true); // Stato di caricamento
 
     // Funzione per gestire la selezione di un prodotto
     const handleProductSelect = (product: ProdottoRecord | null) => {

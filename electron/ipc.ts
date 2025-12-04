@@ -442,17 +442,22 @@ ipcMain.handle('db-delete-prodotto', (_event, idProdotto) => {
     }
 });
 
+interface Row{
+    ddt: string,
+    cod: string
+}
+
 ipcMain.handle('db-get-unique-prodotti-keys', (_event) => {
     try {
         // 1. Recupera tutti i DDT unici dalla tabella 'clienti'
         const ddtResults = db.prepare('SELECT DISTINCT ddt FROM clienti ORDER BY ddt ASC').all();
         // Mappa i risultati in un semplice array di stringhe
-        const ddtList = ddtResults.map(row => row.ddt);
+        const ddtList = ddtResults.map(row => (row as Row).ddt);
 
         // 2. Recupera tutti i COD unici dalla tabella 'articoli'
         const codArticoloResults = db.prepare('SELECT DISTINCT cod FROM articoli ORDER BY cod ASC').all();
         // Mappa i risultati in un semplice array di stringhe
-        const codArticoloList = codArticoloResults.map(row => row.cod);
+        const codArticoloList = codArticoloResults.map(row => (row as Row).cod);
 
         // Ritorna entrambi gli array
         return {

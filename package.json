@@ -1,7 +1,16 @@
 {
-  "name": "electron-react-tailwind",
+  "name": "magazzino-erba",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+
+  "productName": "Magazzino Erba",
+  "description": "Applicazione per la gestione del magazzino",
+  "author": {
+    "email": "mattiabonetti2003@gmail.com",
+    "name": "Mattia Bonetti",
+    "url": "https://github.com/JoJoJoJonny"
+  },
+
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -58,22 +67,30 @@
     "vitest": "^2.1.9"
   },
   "main": "dist-electron/main.js",
+
+
   "build": {
     "directories": {
       "output": "release"
     },
-    "appId": "com.electron.react.tailwind",
+
     "mac": {
       "target": [
         "dmg",
         "zip"
       ]
     },
+
+    "appId": "com.erba.magazzino",
+    "icon": "icon",
+
     "win": {
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "icon": "myIcon.ico",
+      "publisherName": "Erba Angelo"
     },
     "linux": {
       "target": [
