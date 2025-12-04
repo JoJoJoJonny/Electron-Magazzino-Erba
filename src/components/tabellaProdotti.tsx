@@ -13,7 +13,7 @@ interface TabellaProdottiProps {
 }
 
 // NUOVO BLOCCO: Interfacce per la gestione dell'ordinamento
-type SortKey = keyof ProdottoRecord | 'id'; // Le chiavi su cui possiamo ordinare
+type SortKey = keyof ProdottoRecord | 'rowid'; // Le chiavi su cui possiamo ordinare
 type SortDirection = 'ascending' | 'descending' | null;
 
 interface SortConfig {
@@ -52,7 +52,7 @@ const TabellaProdotti: React.FC<TabellaProdottiProps> = ({ onProductSelect, sele
     // Gestisce il click sulla riga
     const handleRowClick = (product: ProdottoRecord) => {
         // Se il prodotto cliccato è già selezionato, deselezionalo
-        if (selectedProduct && selectedProduct.id === product.id) {
+        if (selectedProduct && selectedProduct.rowid === product.rowid) {
             onProductSelect(null);
         } else {
             // Altrimenti, seleziona questo prodotto
@@ -130,7 +130,7 @@ const TabellaProdotti: React.FC<TabellaProdottiProps> = ({ onProductSelect, sele
             product.id.toString().toUpperCase().includes(searchTerm) ||
             product.ddtCliente.toUpperCase().includes(searchTerm) ||
             product.codArticolo.toUpperCase().includes(searchTerm) ||
-            product.quantita.toUpperCase().includes(searchTerm) ||
+            product.quantita.toString().toUpperCase().includes(searchTerm) ||
             product.dataProduzione.toString().toUpperCase().includes(searchTerm) ||
             product.valore.toString().toUpperCase().includes(searchTerm) ||
             product.stoccaggio.toUpperCase().includes(searchTerm)
@@ -200,10 +200,10 @@ const TabellaProdotti: React.FC<TabellaProdottiProps> = ({ onProductSelect, sele
                 {/* RIGA MODIFICATA: Mappa i prodotti ordinati */}
                 {sortedProdotti.map((c) => (
                     <tr
-                        key={c.id}
+                        key={c.rowid}
                         onClick={() => handleRowClick(c)} // Aggiungi l'handler di click
                         className={`border-b cursor-pointer transition 
-                            ${selectedProduct && selectedProduct.id === c.id
+                            ${selectedProduct && selectedProduct.rowid === c.rowid
                             ? 'bg-yellow-100 border-yellow-400 font-semibold' // Evidenzia se selezionato
                             : 'hover:bg-gray-50'}`} // Classe standard
                     >
@@ -211,9 +211,9 @@ const TabellaProdotti: React.FC<TabellaProdottiProps> = ({ onProductSelect, sele
                         <td className="py-2 px-4">{highlightMatch(c.id.toString())}</td>
                         <td className="py-2 px-4">{highlightMatch(c.ddtCliente)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.codArticolo)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.quantita)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.quantita.toString())}</td>
                         <td className="py-2 px-4">{highlightMatch(c.dataProduzione.toString())}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.valore)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.valore.toString())}€</td>
                         <td className="py-2 px-4">{highlightMatch(c.stoccaggio)}</td>
                     </tr>
                 ))}

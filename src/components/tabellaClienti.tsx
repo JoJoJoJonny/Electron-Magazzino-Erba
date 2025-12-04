@@ -13,7 +13,7 @@ interface TabellaClientiProps {
 }
 
 // NUOVO BLOCCO: Interfacce per la gestione dell'ordinamento
-type SortKey = keyof ClienteRecord | 'id'; // Le chiavi su cui possiamo ordinare
+type SortKey = keyof ClienteRecord | 'rowid'; // Le chiavi su cui possiamo ordinare
 type SortDirection = 'ascending' | 'descending' | null;
 
 interface SortConfig {
@@ -52,7 +52,7 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
     // Gestisce il click sulla riga
     const handleRowClick = (client: ClienteRecord) => {
         // Se il cliente cliccato è già selezionato, deselezionalo
-        if (selectedClient && selectedClient.id === client.id) {
+        if (selectedClient && selectedClient.rowid === client.rowid) {
             onClientSelect(null);
         } else {
             // Altrimenti, seleziona questo cliente
@@ -196,10 +196,10 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
                 {/* RIGA MODIFICATA: Mappa i clienti ordinati */}
                 {sortedClienti.map((c) => (
                     <tr
-                        key={c.id}
+                        key={c.rowid}
                         onClick={() => handleRowClick(c)} // Aggiungi l'handler di click
                         className={`border-b cursor-pointer transition 
-                            ${selectedClient && selectedClient.id === c.id
+                            ${selectedClient && selectedClient.rowid === c.rowid
                             ? 'bg-yellow-100 border-yellow-400 font-semibold' // Evidenzia se selezionato
                             : 'hover:bg-gray-50'}`} // Classe standard
                     >

@@ -383,7 +383,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         <label htmlFor="dataProduzione" className="block text-sm font-medium text-gray-700">Data Produzione *</label>
                         <input
                             id="dataProduzione"
-                            type="tel"
+                            type="date"
                             {...register("dataProduzione")}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
@@ -775,6 +775,8 @@ export const Prodotti = () => {
                     onClose={closeEditModal}
                     productToEdit={selectedProduct}
                     forceRefresh={forceRefresh}
+                    availableDdt={datalistOptions.ddt}
+                    availableCodArticolo={datalistOptions.codArticolo}
                 />
             )}
 

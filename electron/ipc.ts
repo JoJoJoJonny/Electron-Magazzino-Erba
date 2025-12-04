@@ -6,7 +6,7 @@ import { db } from './database'; // Importa la connessione creata prima
 // Gestore per la lettura generica di tutte le righe di una tabella
 ipcMain.handle('db-get-all', (_event, tableName) => {
     try {
-        const stmt = db.prepare(`SELECT ROWID as id, * FROM ${tableName}`);
+        const stmt = db.prepare(`SELECT ROWID as rowid, * FROM ${tableName}`);
         return stmt.all(); // Ritorna tutte le righe come array di oggetti
     } catch (error) {
         console.error(`Errore durante il recupero dei dati dalla tabella ${tableName}:`, error);
@@ -54,7 +54,7 @@ ipcMain.handle('db-update-cliente', (_event, datiClienteAggiornati) => {
                 nome = @nome, 
                 telefono = @telefono, 
                 email = @email
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'aggiornamento.
@@ -93,12 +93,12 @@ ipcMain.handle('db-delete-cliente', (_event, idCliente) => {
     try {
         const stmt = db.prepare(`
             DELETE FROM clienti 
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
         // come parametro @id (usiamo un oggetto { id: valore } per il binding)
-        const info = stmt.run({ id: idCliente });
+        const info = stmt.run({ rowid: idCliente });
 
         if (info.changes === 0) {
             return { error: "Nessun cliente trovato con l'ID specificato per l'eliminazione." };
@@ -167,7 +167,7 @@ ipcMain.handle('db-update-articolo', (_event, datiArticoloAggiornati) => {
             SET cod = @cod, 
                 descrizione = @descrizione, 
                 prezzo = @prezzo
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'aggiornamento.
@@ -179,13 +179,41 @@ ipcMain.handle('db-update-articolo', (_event, datiArticoloAggiornati) => {
             return { error: "Nessun articolo trovato con l'ID specificato o nessun dato è stato modificato." };
         }
 
+        // Controlliamo se il prezzo è stato effettivamente aggiornato e se è valido
+        const nuovoPrezzo = parseFloat(datiArticoloAggiornati.prezzo);
+        if (typeof nuovoPrezzo !== 'number' || nuovoPrezzo < 0) {
+            throw new Error("Prezzo unitario non valido per il ricalcolo dei prodotti.");
+        }
+
+        // --- 2. AGGIORNAMENTO DEI PRODOTTI COLLEGATI ---
+
+        // La query aggiorna il campo 'valore' in tutti i prodotti che hanno il 'codArticolo'
+        // corrispondente al 'cod' dell'articolo appena modificato.
+        // Calcolo: valore = (nuovo prezzo) * quantita
+        const updateProdottiStmt = db.prepare(`
+            UPDATE prodotti
+            SET valore = ROUND(@nuovoPrezzo * quantita, 2)
+            WHERE codArticolo = @codArticolo
+        `);
+
+        // Esegui l'aggiornamento dei prodotti.
+        // Passiamo il nuovo prezzo e il codice articolo per identificare le righe.
+        const infoProdotti = updateProdottiStmt.run({
+            nuovoPrezzo: nuovoPrezzo,
+            codArticolo: datiArticoloAggiornati.cod
+        });
+
         // Segnala al processo di rendering che i dati degli articoli devono essere aggiornati
         const mainWindow = BrowserWindow.getAllWindows()[0];
         if (mainWindow) {
             mainWindow.webContents.send('refresh-articoli', { status: 'success' });
         }
 
-        return { success: true, message: 'Articolo aggiornato', changes: info.changes };
+        return {
+            success: true,
+            message: `Articolo aggiornato. Ricalcolati ${infoProdotti.changes} prodotti.`,
+            changes: info.changes + infoProdotti.changes
+        };
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
@@ -205,12 +233,12 @@ ipcMain.handle('db-delete-articolo', (_event, idArticolo) => {
     try {
         const stmt = db.prepare(`
             DELETE FROM articoli 
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
         // come parametro @id (usiamo un oggetto { id: valore } per il binding)
-        const info = stmt.run({ id: idArticolo });
+        const info = stmt.run({ rowid: idArticolo });
 
         if (info.changes === 0) {
             return { error: "Nessun articolo trovato con l'ID specificato per l'eliminazione." };
@@ -242,16 +270,48 @@ ipcMain.handle('db-delete-articolo', (_event, idArticolo) => {
 
 
 
-
+interface ArticoloPrezzo {
+    prezzo: number | null; // Usiamo 'null' o 'unknown' perché non siamo sicuri di cosa restituisca il DB
+}
 
 ipcMain.handle('db-insert-prodotto', (_event, datiProdotto) => {
     try {
-        const stmt = db.prepare(`
-            INSERT INTO prodotti (ddtCliente, codArticolo, quantita, dataProduzione, stoccaggio)
-            VALUES (@ddtCliente, @codArticolo, @quantita, @dataProduzione, @stoccaggio)
+        //prima prendo il prezzo unitario per il calcolo del valore
+        const getPrezzoStmt = db.prepare(`
+            SELECT prezzo
+            FROM articoli
+            WHERE cod = @codArticolo
         `);
 
-        const info = stmt.run(datiProdotto);
+        const articolo = getPrezzoStmt.get({ codArticolo: datiProdotto.codArticolo }) as ArticoloPrezzo;
+
+        if (!articolo) {
+            // Se l'articolo non è stato trovato nel DB, lanciamo un errore
+            throw new Error(`Articolo non trovato per il codice: ${datiProdotto.codArticolo}`);
+        }
+
+        const prezzo = articolo.prezzo;
+
+        if (!prezzo || typeof prezzo !== 'number') {
+            // Se l'articolo non esiste o il prezzo non è valido, interrompiamo la transazione.
+            throw new Error(`Articolo non trovato o prezzo unitario non valido per il COD Articolo: ${datiProdotto.codArticolo}`);
+        }
+
+        const valore = parseFloat((prezzo * datiProdotto.quantita).toFixed(2));
+
+        const stmt = db.prepare(`
+            INSERT INTO prodotti (ddtCliente, codArticolo, quantita, dataProduzione, valore, stoccaggio)
+            VALUES (@ddtCliente, @codArticolo, @quantita, @dataProduzione, @valore, @stoccaggio)
+        `);
+
+        const info = stmt.run({
+            ddtCliente: datiProdotto.ddtCliente,
+            codArticolo: datiProdotto.codArticolo,
+            quantita: datiProdotto.quantita,
+            dataProduzione: datiProdotto.dataProduzione,
+            valore: valore, // Usa il valore calcolato
+            stoccaggio: datiProdotto.stoccaggio
+        });
         // Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
         const mainWindow = BrowserWindow.getAllWindows()[0];
         if (mainWindow) {
@@ -274,20 +334,52 @@ ipcMain.handle('db-insert-prodotto', (_event, datiProdotto) => {
 
 ipcMain.handle('db-update-prodotto', (_event, datiProdottoAggiornati) => {
     try {
+        //prima prendo il prezzo unitario per il calcolo del valore
+        const getPrezzoStmt = db.prepare(`
+            SELECT prezzo
+            FROM articoli
+            WHERE cod = @codArticolo
+        `);
+
+        const articolo = getPrezzoStmt.get({ codArticolo: datiProdottoAggiornati.codArticolo }) as ArticoloPrezzo;
+
+        if (!articolo) {
+            // Se l'articolo non è stato trovato nel DB, lanciamo un errore
+            throw new Error(`Articolo non trovato per il codice: ${datiProdottoAggiornati.codArticolo}`);
+        }
+
+        const prezzo = articolo.prezzo;
+
+        if (!prezzo || typeof prezzo !== 'number') {
+            // Se l'articolo non esiste o il prezzo non è valido, interrompiamo la transazione.
+            throw new Error(`Articolo non trovato o prezzo unitario non valido per il COD Articolo: ${datiProdottoAggiornati.codArticolo}`);
+        }
+
+        const valore = parseFloat((prezzo * datiProdottoAggiornati.quantita).toFixed(2));
+
         const stmt = db.prepare(`
             UPDATE prodotti 
             SET ddtCliente = @ddtCliente, 
                 codArticolo = @codArticolo, 
                 quantita = @quantita,
                 dataProduzione = @dataProduzione,
+                valore = @valore,
                 stoccaggio = @stoccaggio
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'aggiornamento.
         // L'oggetto datiProdottoAggiornati deve contenere tutti i campi
         // e l'ID (@id) per la clausola WHERE.
-        const info = stmt.run(datiProdottoAggiornati);
+        const info = stmt.run({
+            ddtCliente: datiProdottoAggiornati.ddtCliente,
+            codArticolo: datiProdottoAggiornati.codArticolo,
+            quantita: datiProdottoAggiornati.quantita,
+            dataProduzione: datiProdottoAggiornati.dataProduzione,
+            valore: valore, // Usa il valore calcolato
+            stoccaggio: datiProdottoAggiornati.stoccaggio,
+            rowid: datiProdottoAggiornati.rowid
+        });
 
         if (info.changes === 0) {
             return { error: "Nessun prodotto trovato con l'ID specificato o nessun dato è stato modificato." };
@@ -318,12 +410,12 @@ ipcMain.handle('db-delete-prodotto', (_event, idProdotto) => {
     try {
         const stmt = db.prepare(`
             DELETE FROM prodotti 
-            WHERE ROWID = @id
+            WHERE ROWID = @rowid
         `);
 
         // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
         // come parametro @id (usiamo un oggetto { id: valore } per il binding)
-        const info = stmt.run({ id: idProdotto });
+        const info = stmt.run({ rowid: idProdotto });
 
         if (info.changes === 0) {
             return { error: "Nessun prodotto trovato con l'ID specificato per l'eliminazione." };

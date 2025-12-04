@@ -15,7 +15,7 @@ interface ClienteInputs {
 // Interfaccia che rappresenta il Cliente completo letto dal DB (include l'ID interno di SQLite)
 // L'ID interno sarà usato per l'UPDATE della riga.
 export interface ClienteRecord extends ClienteInputs {
-    id: number; // Assumiamo che il DB usi un ID numerico (ROWID) per l'identificazione interna
+    rowid: number; // Assumiamo che il DB usi un ID numerico (ROWID) per l'identificazione interna
 }
 
 interface AddClientModalProps {
@@ -203,9 +203,9 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
     // Questo è cruciale quando si seleziona un NUOVO cliente per la modifica.
     useEffect(() => {
         if (clientToEdit) {
-            // Usiamo clientToEdit.id come trigger per resettare lo stato interno del form
+            // Usiamo clientToEdit.rowid come trigger per resettare lo stato interno del form
             // e forzare l'aggiornamento dei campi.
-            // NON possiamo confrontare clientToEdit.id con formValues.id perché formValues non ha un campo id!
+            // NON possiamo confrontare clientToEdit.rowid con formValues.rowid perché formValues non ha un campo rowid!
             setValue('ddt', clientToEdit.ddt);
             setValue('piva', clientToEdit.piva);
             setValue('nome', clientToEdit.nome);
@@ -229,7 +229,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
             const result = await window.ipcRenderer.invoke('db-update-cliente', {
                 // Passiamo l'ID del record e il DDT *originale* se ne avessimo bisogno.
                 // Per ora, ci affidiamo all'ID interno (ROWID) per la lookup.
-                id: clientToEdit.id,
+                rowid: clientToEdit.rowid,
                 // Passiamo i dati modificati, inclusa la nuova ddt
                 ...data
             });
@@ -258,7 +258,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg">
-                <h2 className="text-2xl font-bold mb-4 text-yellow-600">Modifica Cliente ID Interno: {clientToEdit.id}</h2>
+                <h2 className="text-2xl font-bold mb-4 text-yellow-600">Modifica Cliente ID Interno: {clientToEdit.rowid}</h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
@@ -502,7 +502,7 @@ export const Clienti = () => {
 
     // NUOVO STATO INTERMEDIO per l'eliminazione.
     const handleDelete = () => {
-        if (!selectedClient || !selectedClient.id) {
+        if (!selectedClient || !selectedClient.rowid) {
             setMessage({ text: "Nessun cliente valido selezionato per l'eliminazione.", type: 'error' });
             return;
         }
@@ -516,11 +516,11 @@ export const Clienti = () => {
         setIsConfirmModalOpen(false); // Chiudi il modale subito
 
         // Protezione aggiuntiva
-        if (!selectedClient || !selectedClient.id) return;
+        if (!selectedClient || !selectedClient.rowid) return;
 
         try {
             // Chiama la funzione IPC passando solo l'ID (ROWID)
-            const result = await window.electronAPI.deleteCliente(selectedClient.id);
+            const result = await window.electronAPI.deleteCliente(selectedClient.rowid);
 
             if (result && 'error' in result) {
                 setMessage({ text: `Errore durante l'eliminazione: ${result.error}`, type: 'error' });
@@ -672,7 +672,7 @@ export const Clienti = () => {
                     onClose={() => setIsConfirmModalOpen(false)}
                     onConfirm={confirmDelete}
                     title="Conferma Eliminazione Cliente"
-                    message={`Sei sicuro di voler eliminare definitivamente il cliente "${selectedClient.nome}" (ID: ${selectedClient.id})? Quest'azione non può essere annullata.`}
+                    message={`Sei sicuro di voler eliminare definitivamente il cliente "${selectedClient.nome}" (ROWID: ${selectedClient.rowid})? Quest'azione non può essere annullata.`}
                     confirmButtonText="Sì, Elimina"
                     confirmButtonColor="bg-red-600"
                 />

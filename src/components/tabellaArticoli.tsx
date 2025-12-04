@@ -13,7 +13,7 @@ interface TabellaArticoliProps {
 }
 
 // NUOVO BLOCCO: Interfacce per la gestione dell'ordinamento
-type SortKey = keyof ArticoloRecord | 'id'; // Le chiavi su cui possiamo ordinare
+type SortKey = keyof ArticoloRecord | 'rowid'; // Le chiavi su cui possiamo ordinare
 type SortDirection = 'ascending' | 'descending' | null;
 
 interface SortConfig {
@@ -52,7 +52,7 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
     // Gestisce il click sulla riga
     const handleRowClick = (article: ArticoloRecord) => {
         // Se il articolo cliccato è già selezionato, deselezionalo
-        if (selectedArticle && selectedArticle.id === article.id) {
+        if (selectedArticle && selectedArticle.rowid === article.rowid) {
             onArticleSelect(null);
         } else {
             // Altrimenti, seleziona questo articolo
@@ -192,10 +192,10 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
                 {/* RIGA MODIFICATA: Mappa i articoli ordinati */}
                 {sortedArticoli.map((c) => (
                     <tr
-                        key={c.id}
+                        key={c.rowid}
                         onClick={() => handleRowClick(c)} // Aggiungi l'handler di click
                         className={`border-b cursor-pointer transition 
-                            ${selectedArticle && selectedArticle.id === c.id
+                            ${selectedArticle && selectedArticle.rowid === c.rowid
                             ? 'bg-yellow-100 border-yellow-400 font-semibold' // Evidenzia se selezionato
                             : 'hover:bg-gray-50'}`} // Classe standard
                     >
