@@ -33,6 +33,8 @@ export interface IElectronAPI {
     on: (channel: string, listener: (...args: any[]) => void) => () => void;
     off: (channel: string, listener: (...args: any[]) => void) => void;
 
+    getStatistiche: () => Promise<any[] | { error: string }>;
+
     // TODO: ... altre API
 }
 

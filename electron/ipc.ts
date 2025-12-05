@@ -192,7 +192,7 @@ ipcMain.handle('db-update-articolo', (_event, datiArticoloAggiornati) => {
         // Calcolo: valore = (nuovo prezzo) * quantita
         const updateProdottiStmt = db.prepare(`
             UPDATE prodotti
-            SET valore = ROUND(@nuovoPrezzo * quantita, 2)
+            SET valore = @nuovoPrezzo * quantita
             WHERE codArticolo = @codArticolo
         `);
 
@@ -583,3 +583,41 @@ ipcMain.handle('db-delete-attrezzatura', (_event, idAttrezzatura) => {
         return { error: `Errore database: ${errorMessage}` };
     }
 });
+
+
+ipcMain.handle('db-get-statistiche', () => {
+    try {
+        // Funzione helper per estrarre il valore di conteggio/somma da una singola riga
+        const getValue = (sql:string) => {
+            const row = db.prepare(sql).get();
+            return row ? Object.values(row)[0] || 0 : 0;
+        };
+
+        const numClienti = getValue(`SELECT COUNT(DISTINCT ddt) FROM clienti`);
+
+        const numArticoli = getValue(`SELECT COUNT(DISTINCT cod) FROM articoli`);
+
+        const numAttrezzature = getValue(`SELECT COUNT(id) FROM attrezzature`);
+
+        const numProdottiTotali = getValue(`SELECT SUM(quantita) FROM prodotti`);
+
+        const valoreTotaleProdotti = getValue(`SELECT SUM(valore) FROM prodotti`);
+
+        // Risultato finale
+        return {
+            numClienti: numClienti,
+            numArticoli: numArticoli,
+            numAttrezzature: numAttrezzature,
+            numProdottiTotali: numProdottiTotali,
+            // Assicurati che il valore monetario sia un numero
+            valoreTotaleProdotti: parseFloat(valoreTotaleProdotti) || 0,
+        };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore durante il recupero delle statistiche:", errorMessage);
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+

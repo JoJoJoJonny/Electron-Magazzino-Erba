@@ -5,7 +5,7 @@ import { Articoli } from "@/pages/articoli";
 import { Prodotti } from "@/pages/prodotti";
 import { Attrezzature } from "@/pages/attrezzature";
 //import { Transazioni } from "@/pages/transazioni";
-//import { Statistiche } from "@/pages/statistiche";
+import { Statistiche } from "@/pages/statistiche";
 
 export default function App() {
     return (
@@ -18,9 +18,8 @@ export default function App() {
                         <Route path="/articoli" element={<Articoli />} />
                         <Route path="/prodotti" element={<Prodotti />} />
                         <Route path="/attrezzature" element={<Attrezzature />} />
-                        {/*<Route path="/transazioni" element={<Transazioni />} />
+                        {/*<Route path="/transazioni" element={<Transazioni />} />*/}
                         <Route path="/statistiche" element={<Statistiche />} />
-                        <Route path="*" element={<Clienti />} />*/}
                     </Routes>
                 </div>
             </div>

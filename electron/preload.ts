@@ -55,5 +55,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateAttrezzatura: (data: any) => ipcRenderer.invoke('db-update-attrezzatura', data),
   deleteAttrezzatura: (id: any) => ipcRenderer.invoke('db-delete-attrezzatura', id),
 
+  getStatistiche: () => ipcRenderer.invoke('db-get-all'),
+
   // TODO: Altre API andranno qui (es. insertProdotto, updateProdotto, ecc.)
 });

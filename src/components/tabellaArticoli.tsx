@@ -155,7 +155,7 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
 
     return (
         <div className="p-0">
-            <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
                 <thead className="bg-myColor text-white">
                 <tr>
                     {/* Definiamo i campi ordinabili e il testo da mostrare */}
