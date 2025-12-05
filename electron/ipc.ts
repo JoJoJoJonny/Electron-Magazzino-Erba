@@ -475,3 +475,111 @@ ipcMain.handle('db-get-unique-prodotti-keys', (_event) => {
         };
     }
 });
+
+
+
+
+
+
+
+
+ipcMain.handle('db-insert-attrezzatura', (_event, datiAttrezzatura) => {
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO attrezzature (ddtCliente, codArticolo, stoccaggio)
+            VALUES (@ddtCliente, @codArticolo, @stoccaggio)
+        `);
+
+        const info = stmt.run(datiAttrezzatura);
+        // Segnala al processo di rendering che i dati delle attrezzature devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-attrezzature', { status: 'success' });
+        }
+
+        return { success: true, message: 'Attrezzatura inserita', lastInsertRowid: info.lastInsertRowid };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'inserimento dell'attrezzatura:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. cod duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Il COD specificato (chiave primaria) esiste già." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-update-attrezzatura', (_event, datiAttrezzaturaAggiornati) => {
+    try {
+        const stmt = db.prepare(`
+            UPDATE attrezzature
+            SET ddtCliente = @ddtCliente,
+                codArticolo = @codArticolo,
+                stoccaggio = @stoccaggio
+            WHERE ROWID = @rowid
+        `);
+
+        const info = stmt.run(datiAttrezzaturaAggiornati);
+
+        if (info.changes === 0) {
+            return { error: "Nessuna attrezzatura trovata con l'ID specificato o nessun dato è stato modificato." };
+        }
+
+        // Segnala al processo di rendering che i dati devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-attrezzature', { status: 'success' });
+        }
+
+        return { success: true, message: 'Attrezzatura aggiornata', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'aggiornamento dell'attrezzatura:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. DDT duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Il DDT specificato (chiave primaria) esiste già in un altro record." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-delete-attrezzatura', (_event, idAttrezzatura) => {
+    try {
+        const stmt = db.prepare(`
+            DELETE FROM attrezzature 
+            WHERE ROWID = @rowid
+        `);
+
+        // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+        // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+        const info = stmt.run({ rowid: idAttrezzatura });
+
+        if (info.changes === 0) {
+            return { error: "Nessuna attrezzatura trovata con l'ID specificato per l'eliminazione." };
+        }
+
+        // Segnala al processo di rendering che i dati dell'attrezzatura devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-attrezzatura', { status: 'success' });
+        }
+
+        return { success: true, message: 'Attrezzatura eliminata', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione dell'attrezzatura:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare l'attrezzatura: sono presenti elementi collegati a questo ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});

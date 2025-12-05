@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Clienti } from "@/pages/clienti";
 import { Articoli } from "@/pages/articoli";
 import { Prodotti } from "@/pages/prodotti";
-//import { Attrezzature } from "@/pages/attrezzature";
+import { Attrezzature } from "@/pages/attrezzature";
 //import { Transazioni } from "@/pages/transazioni";
 //import { Statistiche } from "@/pages/statistiche";
 
@@ -17,8 +17,8 @@ export default function App() {
                         <Route path="/clienti" element={<Clienti />} />
                         <Route path="/articoli" element={<Articoli />} />
                         <Route path="/prodotti" element={<Prodotti />} />
-                        {/*<Route path="/attrezzature" element={<Attrezzature />} />
-                        <Route path="/transazioni" element={<Transazioni />} />
+                        <Route path="/attrezzature" element={<Attrezzature />} />
+                        {/*<Route path="/transazioni" element={<Transazioni />} />
                         <Route path="/statistiche" element={<Statistiche />} />
                         <Route path="*" element={<Clienti />} />*/}
                     </Routes>

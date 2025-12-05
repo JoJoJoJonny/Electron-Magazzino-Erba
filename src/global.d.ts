@@ -24,6 +24,11 @@ export interface IElectronAPI {
     updateProdotto: (data: any) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
     deleteProdotto: (id: number) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
 
+    //CRUD - Attrezzature
+    insertAttrezzatura: (data: any) => Promise<{ success: boolean, lastInsertRowid?: number } | { error: string }>;
+    updateAttrezzatura: (data: any) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
+    deleteAttrezzatura: (id: number) => Promise<{ success: boolean, changes?: number, message: string } | { error: string }>;
+
     // Comunicazione asincrona (per il refresh della tabella)
     on: (channel: string, listener: (...args: any[]) => void) => () => void;
     off: (channel: string, listener: (...args: any[]) => void) => void;

@@ -39,14 +39,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   insertCliente: (data: any) => ipcRenderer.invoke('db-insert-cliente', data),
   updateCliente: (data: any) => ipcRenderer.invoke('db-update-cliente', data),
   deleteCliente: (id: any) => ipcRenderer.invoke('db-delete-cliente', id),
+
   // CRUD - articoli
   insertArticolo: (data: any) => ipcRenderer.invoke('db-insert-articolo', data),
   updateArticolo: (data: any) => ipcRenderer.invoke('db-update-articolo', data),
   deleteArticolo: (id: any) => ipcRenderer.invoke('db-delete-articolo', id),
+
   // CRUD - prodotti
   insertProdotto: (data: any) => ipcRenderer.invoke('db-insert-prodotto', data),
   updateProdotto: (data: any) => ipcRenderer.invoke('db-update-prodotto', data),
   deleteProdotto: (id: any) => ipcRenderer.invoke('db-delete-prodotto', id),
+
+  // CRUD - attrezzature
+  insertAttrezzatura: (data: any) => ipcRenderer.invoke('db-insert-attrezzatura', data),
+  updateAttrezzatura: (data: any) => ipcRenderer.invoke('db-update-attrezzatura', data),
+  deleteAttrezzatura: (id: any) => ipcRenderer.invoke('db-delete-attrezzatura', id),
 
   // TODO: Altre API andranno qui (es. insertProdotto, updateProdotto, ecc.)
 });
