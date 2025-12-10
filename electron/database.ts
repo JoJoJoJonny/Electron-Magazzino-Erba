@@ -18,10 +18,20 @@ function initDatabase() {
     db.exec(`
     CREATE TABLE IF NOT EXISTS clienti (
       ddt TEXT PRIMARY KEY,
-      piva TEXT,
       nome TEXT,
+      piva TEXT,
       telefono TEXT,
-      email TEXT
+      email TEXT,
+      indirizzo TEXT
+    );
+  `);
+
+    // Tabella Articoli
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS articoli (
+      cod TEXT PRIMARY KEY,
+      descrizione TEXT,
+      prezzo REAL
     );
   `);
 
@@ -44,7 +54,7 @@ function initDatabase() {
     );
   `);
 
-    // Tabella Attrezzi (inventario interno)
+    // Tabella Attrezzi
     db.exec(`
     CREATE TABLE IF NOT EXISTS attrezzature (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,12 +70,34 @@ function initDatabase() {
     );
   `);
 
-    // Tabella Articoli
+    // Tabella Semilavorati
     db.exec(`
-    CREATE TABLE IF NOT EXISTS articoli (
-      cod TEXT PRIMARY KEY,
-      descrizione TEXT,
-      prezzo REAL
+    CREATE TABLE IF NOT EXISTS semilavorati (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      quantita TEXT,
+      stoccaggio TEXT,
+      descrizione TEXT
+    );
+  `);
+
+    // Tabella Transazioni
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS transazioni (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ddtCliente TEXT,
+      codArticolo TEXT,
+      quantita TEXT,
+      valore REAL,
+      data DATETIME DEFAULT CURRENT_TIMESTAMP,
+      tipo TEXT      --"in" oppure "out"
+        -- ho tolto le chiavi esterne in modo che un prodotto possa essere cancellato
+        -- anche se c'è stata in passato una transizione
+      /*FOREIGN KEY (ddtCliente) REFERENCES clienti(ddt)
+          ON UPDATE CASCADE
+          ON DELETE RESTRICT,
+      FOREIGN KEY (codArticolo) REFERENCES articoli(cod)
+          ON UPDATE CASCADE
+          ON DELETE RESTRICT*/
     );
   `);
 

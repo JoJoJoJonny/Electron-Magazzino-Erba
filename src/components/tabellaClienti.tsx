@@ -128,10 +128,11 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
         // DDT, P.IVA, Nome, Telefono, Email.
         const matches = (
             client.ddt.toUpperCase().includes(searchTerm) ||
-            client.piva.toUpperCase().includes(searchTerm) ||
             client.nome.toUpperCase().includes(searchTerm) ||
-            (client.telefono || '').toUpperCase().includes(searchTerm) || // Gestisce null/undefined
-            (client.email || '').toUpperCase().includes(searchTerm)
+            client.piva.toUpperCase().includes(searchTerm) ||
+            client.telefono.toUpperCase().includes(searchTerm) ||
+            client.email.toUpperCase().includes(searchTerm) ||
+            client.indirizzo.toUpperCase().includes(searchTerm)
         );
 
         return matches;
@@ -163,10 +164,11 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
                     {/* Definiamo i campi ordinabili e il testo da mostrare */}
                     {([
                         { key: 'ddt', label: 'DDT' },
-                        { key: 'piva', label: 'P.Iva' },
                         { key: 'nome', label: 'Nome' },
+                        { key: 'piva', label: 'P.Iva' },
                         { key: 'telefono', label: 'Telefono' },
                         { key: 'email', label: 'Email' },
+                        { key: 'indirizzo', label: 'Indirizzo' },
                     ] as { key: SortKey, label: string }[]).map(({ key, label }) => (
                         <th
                             key={key}
@@ -205,10 +207,11 @@ const TabellaClienti: React.FC<TabellaClientiProps> = ({ onClientSelect, selecte
                     >
                         {/* RIGHE MODIFICATE: Applica highlightMatch a tutte le celle */}
                         <td className="py-2 px-4">{highlightMatch(c.ddt)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.piva)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.nome)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.piva)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.telefono)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.email)}</td>
+                        <td className="py-2 px-4">{highlightMatch(c.indirizzo)}</td>
                     </tr>
                 ))}
                 {/* NUOVO BLOCCO: Messaggio se la ricerca non trova nulla */}

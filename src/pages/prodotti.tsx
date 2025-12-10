@@ -496,6 +496,305 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
 
 
+
+
+interface EntrataProdottoModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    availableDdt: SimpleDatalistOption[]; // Nuova prop per i valori DDT prelevati dal DB
+    availableCodArticolo: SimpleDatalistOption[]; // Nuova prop per i valori Cod. Articolo prelevati dal DB
+}
+
+const EntrataProdottoModal: React.FC<EntrataProdottoModalProps> = ({ isOpen, onClose, availableDdt, availableCodArticolo }) => {
+    const { register, handleSubmit, reset, formState: { isSubmitting, errors } } = useForm<ProdottoInputs>();
+    const [statusMessage, setStatusMessage] = useState('');
+
+    if (!isOpen) return null;
+
+    const onSubmit: SubmitHandler<ProdottoInputs> = async (data) => {
+        setStatusMessage('Salvataggio in corso...');
+
+        try {
+            const result = await window.ipcRenderer.invoke('db-prodotto-in-entrata', data);
+
+            if (result && result.success) {
+                setStatusMessage('Prodotto inserito con successo!');
+                reset();
+                onClose();
+            } else {
+                setStatusMessage(`Errore: ${result.error || 'Impossibile salvare i dati.'}`);
+            }
+        } catch (error) {
+            console.error('Errore IPC:', error);
+            setStatusMessage('Errore di comunicazione con il database.');
+        }
+    };
+
+    const handleClose = () => {
+        reset();
+        setStatusMessage('');
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg">
+                <h2 className="text-2xl font-bold mb-4 text-myColor">Aggiungi Nuovo Prodotto</h2>
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+                    {/* Campo DDT Cliente: USA DATALIST */}
+                    <DatalistInput
+                        id="ddtCliente"
+                        label="DDT Cliente"
+                        register={register}
+                        options={availableDdt}
+                        required={true}
+                    />
+                    {errors.ddtCliente && <p className="text-red-500 text-xs mt-1">{errors.ddtCliente.message}</p>}
+
+                    {/* Campo COD Articolo: USA DATALIST */}
+                    <DatalistInput
+                        id="codArticolo"
+                        label="COD Articolo"
+                        register={register}
+                        options={availableCodArticolo}
+                        required={true}
+                    />
+                    {errors.codArticolo && <p className="text-red-500 text-xs mt-1">{errors.codArticolo.message}</p>}
+
+                    {/* Campo Quantità */}
+                    <div>
+                        <label htmlFor="quantita" className="block text-sm font-medium text-gray-700">Quantità *</label>
+                        <input
+                            id="quantita"
+                            type="number"
+                            step="1"
+                            {...register("quantita", { required: true , valueAsNumber: true, min: {value: 1, message: "La quantità deve essere almeno 1"}})}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
+                        />
+                        {errors.quantita && <p className="text-red-500 text-xs mt-1">{errors.quantita.message}</p>}
+                    </div>
+
+                    {/* Campo Data Produzione */}
+                    <div>
+                        <label htmlFor="dataProduzione" className="block text-sm font-medium text-gray-700">Data Produzione *</label>
+                        <input
+                            id="dataProduzione"
+                            type="date"
+                            {...register("dataProduzione")}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
+                        />
+                    </div>
+
+                    {/* Campo Stoccaggio */}
+                    <div>
+                        <label htmlFor="stoccaggio" className="block text-sm font-medium text-gray-700">Stoccaggio *</label>
+                        <input
+                            id="stoccaggio"
+                            type="text"
+                            {...register("stoccaggio")}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
+                        />
+                        {errors.stoccaggio && <p className="text-red-500 text-xs mt-1">{errors.stoccaggio.message}</p>}
+                    </div>
+
+                    {/* Messaggio di stato */}
+                    {statusMessage && (
+                        <p className={`text-center p-2 rounded text-sm ${statusMessage.startsWith('Errore') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                            {statusMessage}
+                        </p>
+                    )}
+
+                    {/* Bottoni di Azione */}
+                    <div className="flex justify-end space-x-4 pt-4">
+                        {/* Bottone ANNULLA */}
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition disabled:opacity-50"
+                        >
+                            Annulla
+                        </button>
+
+                        {/* Bottone CONFERMA */}
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-6 py-2 text-sm font-medium text-white bg-myColor rounded-lg shadow-md hover:bg-myColor/90 transition disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'Salvataggio...' : 'Conferma Inserimento'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+
+interface UscitaProdottoModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    productToEdit: ProdottoRecord;
+    forceRefresh: () => void;
+}
+
+// Funzione principale del modale
+export const UscitaProdottoModal: React.FC<UscitaProdottoModalProps> = ({
+                                                                            isOpen,
+                                                                            onClose,
+                                                                            productToEdit,
+                                                                            forceRefresh,
+                                                                        }) => {
+    // Stato per la quantità che l'utente vuole far uscire
+    const [quantitaUscita, setQuantitaUscita] = useState<number>(1);
+    const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Massima quantità disponibile (la quantità attuale del prodotto)
+    const maxQuantita = productToEdit.quantita;
+
+    // Reset degli stati quando il modale si apre/cambia prodotto
+    useEffect(() => {
+        if (isOpen) {
+            setQuantitaUscita(1);
+            setErrorMessage(null);
+        }
+    }, [isOpen, productToEdit]);
+
+    // Funzione di gestione dell'uscita
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // 1. Validazione di base
+        if (quantitaUscita <= 0 || quantitaUscita > maxQuantita) {
+            setErrorMessage(`La quantità in uscita deve essere tra 1 e ${maxQuantita}.`);
+            return;
+        }
+
+        setIsSaving(true);
+        setErrorMessage(null);
+
+        try {
+            // Chiamata IPC al backend per gestire l'uscita
+            // I dati inviati al backend:
+            // - rowid: per identificare il prodotto.
+            // - quantitaUscita: il numero di unità da rimuovere.
+            // Il backend si occuperà di creare la transazione, aggiornare o eliminare il prodotto.
+            const result = await window.ipcRenderer.invoke('db-prodotto-in-uscita', {
+                rowid: productToEdit.rowid,
+                ddtCliente: productToEdit.ddtCliente,
+                codArticolo: productToEdit.codArticolo,
+                quantita: productToEdit.quantita,
+                quantitaUscita: quantitaUscita,
+            });
+
+            if (result && 'error' in result) {
+                setErrorMessage(result.error);
+            } else {
+                // Successo: chiudi, aggiorna e notifica
+                forceRefresh();
+                onClose();
+            }
+
+        } catch (error) {
+            setErrorMessage('Errore di comunicazione IPC: impossibile completare l\'uscita.');
+            console.error(error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
+
+                {/* Intestazione */}
+                <h2 className="text-2xl font-bold text-gray-800 border-b pb-3 mb-4">
+                    Registra Uscita Prodotto
+                </h2>
+
+                {/* Dati Prodotto Selezionato */}
+                <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200 text-sm">
+                    <p className="font-semibold text-gray-700">Prodotto Selezionato:</p>
+                    <p>ID: <span className="font-mono text-myColor font-bold">{productToEdit.id}</span></p>
+                    <p>DDT Cliente: <span className="font-mono text-myColor font-bold">{productToEdit.ddtCliente}</span></p>
+                    <p>Cod Articolo: <span className="font-mono text-myColor font-bold">{productToEdit.codArticolo}</span></p>
+                    <p>Quantità Attuale: <span className="font-mono text-myColor font-bold">{maxQuantita}</span></p>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit}>
+
+                    {/* Campo Quantità in Uscita */}
+                    <div className="mb-4">
+                        <label htmlFor="quantitaUscita" className="block text-sm font-medium text-gray-700">
+                            Quantità da far uscire (Max: {maxQuantita})
+                        </label>
+                        <input
+                            type="number"
+                            id="quantitaUscita"
+                            value={quantitaUscita}
+                            onChange={(e) => {
+                                let value = parseInt(e.target.value, 10);
+                                if (isNaN(value) || value < 1) value = 1;
+                                if (value > maxQuantita) value = maxQuantita; // Limita al massimo disponibile
+                                setQuantitaUscita(value);
+                            }}
+                            min="1"
+                            max={maxQuantita}
+                            required
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                        />
+                    </div>
+
+                    {/* Messaggio di Errore */}
+                    {errorMessage && (
+                        <div className="p-3 mb-4 text-sm font-medium text-red-800 bg-red-100 rounded-lg">
+                            {errorMessage}
+                        </div>
+                    )}
+
+                    {/* Footer del Modale (Pulsanti) */}
+                    <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={isSaving}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                        >
+                            Annulla
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSaving || quantitaUscita < 1 || quantitaUscita > maxQuantita}
+                            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                        >
+                            {isSaving ? (
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            )}
+                            Conferma Uscita
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+
+
 import TabellaProdotti from '@/components/tabellaProdotti';
 
 export const Prodotti = () => {
@@ -504,6 +803,12 @@ export const Prodotti = () => {
 
     // NUOVO STATO: Stato per controllare l'apertura/chiusura del modale di MODIFICA
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // NUOVO STATO: Stato per l'apertura del modale IN ENTRATA (Tracciato)
+    const [isInEntrataModalOpen, setIsInEntrataModalOpen] = useState(false);
+
+    // NUOVO STATO: Stato per l'apertura del modale IN USCITA (Tracciato)
+    const [isInUscitaModalOpen, setIsInUscitaModalOpen] = useState(false);
 
     // NUOVO STATO: Stato per tenere traccia del prodotto selezionato (per Modifica/Elimina)
     const [selectedProduct, setSelectedProduct] = useState<ProdottoRecord | null>(null);
@@ -545,6 +850,30 @@ export const Prodotti = () => {
     // Funzione per chiudere il modale di aggiunta
     const closeAddModal = () => {
         setIsAddModalOpen(false);
+    };
+
+    // NUOVA FUNZIONE: Apertura del modale IN ENTRATA (TRACCIATO)
+    const openInEntrataModal = () => {
+        setSelectedProduct(null); // Non usiamo una selezione esistente
+        setIsInEntrataModalOpen(true);
+    };
+
+    // NUOVA FUNZIONE: Chiusura del modale IN ENTRATA
+    const closeInEntrataModal = () => {
+        setIsInEntrataModalOpen(false);
+    };
+
+    // NUOVA FUNZIONE: Apertura del modale IN USCITA (TRACCIATO)
+    const openInUscitaModal = () => {
+        if (selectedProduct) {
+            setIsInUscitaModalOpen(true);
+        }
+    };
+
+    // NUOVA FUNZIONE: Chiusura del modale IN USCITA
+    const closeInUscitaModal = () => {
+        setIsInUscitaModalOpen(false);
+        setSelectedProduct(null); // Pulisce la selezione dopo l'operazione
     };
 
     // Stato per la chiave di refresh per forzare il ricaricamento della tabella
@@ -718,6 +1047,34 @@ export const Prodotti = () => {
                 {/* Spazio per espansione (Spinge gli elementi successivi a destra) */}
                 <div className="flex-grow w-4"></div>
 
+                {/* Gruppo 3: In Entrata e In Uscita */}
+                <div className="flex space-x-2">
+                    <button
+                        onClick={openInEntrataModal} // Usa la nuova funzione
+                        className="flex items-center px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        In Entrata
+                    </button>
+
+                    <button
+                        onClick={openInUscitaModal}
+                        disabled={!selectedProduct} // Disabilita se selectedProduct è null
+                        className={`flex items-center px-4 py-2 text-white font-semibold rounded-lg shadow-md transition 
+                            ${selectedProduct ? 'bg-purple-500 hover:bg-purple-600' : 'bg-purple-300 opacity-50 cursor-not-allowed'}`}
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18V6m0 0l-4 4m4-4l4 4" />
+                        </svg>
+                        In Uscita
+                    </button>
+                </div>
+
+                {/* Spazio per espansione (Spinge gli elementi successivi a destra) */}
+                <div className="flex-grow w-4"></div>
+
                 {/* Gruppo 3: Barra di Ricerca */}
                 <div className="relative w-full sm:w-80">
                     <input
@@ -792,6 +1149,23 @@ export const Prodotti = () => {
                     message={`Sei sicuro di voler eliminare definitivamente il prodotto "${selectedProduct.id}" (ROWID: ${selectedProduct.rowid})? Quest'azione non può essere annullata.`}
                     confirmButtonText="Sì, Elimina"
                     confirmButtonColor="bg-red-600"
+                />
+            )}
+
+            <EntrataProdottoModal
+                isOpen={isInEntrataModalOpen}
+                onClose={closeInEntrataModal}
+                availableDdt={datalistOptions.ddt}
+                availableCodArticolo={datalistOptions.codArticolo}
+            />
+
+            {/* NUOVO BLOCCO: Modale di conferma eliminazione non bloccante */}
+            {selectedProduct && (
+                <UscitaProdottoModal
+                    isOpen={isInUscitaModalOpen}
+                    onClose={closeInUscitaModal}
+                    productToEdit={selectedProduct}
+                    forceRefresh={forceRefresh}
                 />
             )}
         </div>

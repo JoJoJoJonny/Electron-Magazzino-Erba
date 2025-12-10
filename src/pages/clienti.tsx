@@ -6,10 +6,11 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 // Definisco l'interfaccia dei dati del cliente
 interface ClienteInputs {
     ddt: string;
-    piva: string;
     nome: string;
+    piva: string;
     telefono: string;
     email: string;
+    indirizzo: string;
 }
 
 // Interfaccia che rappresenta il Cliente completo letto dal DB (include l'ID interno di SQLite)
@@ -72,17 +73,6 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose }) => {
                         />
                     </div>
 
-                    {/* Campo Partita IVA */}
-                    <div>
-                        <label htmlFor="piva" className="block text-sm font-medium text-gray-700">P. IVA *</label>
-                        <input
-                            id="piva"
-                            type="text"
-                            {...register("piva", { required: true })}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
-                        />
-                    </div>
-
                     {/* Campo Nome */}
                     <div>
                         <label htmlFor="nome" className="block text-sm font-medium text-gray-700">Nome/Ragione Sociale *</label>
@@ -94,13 +84,24 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose }) => {
                         />
                     </div>
 
+                    {/* Campo Partita IVA */}
+                    <div>
+                        <label htmlFor="piva" className="block text-sm font-medium text-gray-700">P. IVA</label>
+                        <input
+                            id="piva"
+                            type="text"
+                            {...register("piva", { required: false })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
+                        />
+                    </div>
+
                     {/* Campo Telefono */}
                     <div>
                         <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Telefono</label>
                         <input
                             id="telefono"
                             type="tel"
-                            {...register("telefono")}
+                            {...register("telefono", { required: false })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
                     </div>
@@ -111,7 +112,18 @@ const AddClientModal: React.FC<AddClientModalProps> = ({ isOpen, onClose }) => {
                         <input
                             id="email"
                             type="email"
-                            {...register("email")}
+                            {...register("email", { required: false })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
+                        />
+                    </div>
+
+                    {/* Campo Indirizzo */}
+                    <div>
+                        <label htmlFor="indirizzo" className="block text-sm font-medium text-gray-700">Indirizzo</label>
+                        <input
+                            id="indirizzo"
+                            type="text"
+                            {...register("indirizzo", { required: false })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
                     </div>
@@ -179,10 +191,11 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
         // Passiamo i valori del record per i default. React Hook Form li accetterà.
         defaultValues: {
             ddt: clientToEdit.ddt,
-            piva: clientToEdit.piva,
             nome: clientToEdit.nome,
+            piva: clientToEdit.piva,
             telefono: clientToEdit.telefono,
             email: clientToEdit.email,
+            indirizzo: clientToEdit.indirizzo,
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
@@ -193,7 +206,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
     const formValues = watch();
 
     // Dobbiamo ciclare solo sulle chiavi che esistono in ClienteInputs
-    const keysToCompare: (keyof ClienteInputs)[] = ['ddt', 'piva', 'nome', 'telefono', 'email'];
+    const keysToCompare: (keyof ClienteInputs)[] = ['ddt', 'nome', 'piva', 'telefono', 'email', 'indirizzo'];
 
     // Controlla se almeno uno dei campi è diverso
     const isDirty = keysToCompare.some(key => formValues[key] !== clientToEdit[key]);
@@ -207,10 +220,11 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
             // e forzare l'aggiornamento dei campi.
             // NON possiamo confrontare clientToEdit.rowid con formValues.rowid perché formValues non ha un campo rowid!
             setValue('ddt', clientToEdit.ddt);
-            setValue('piva', clientToEdit.piva);
             setValue('nome', clientToEdit.nome);
+            setValue('piva', clientToEdit.piva);
             setValue('telefono', clientToEdit.telefono);
             setValue('email', clientToEdit.email);
+            setValue('indirizzo', clientToEdit.indirizzo);
 
             // Resettiamo eventuali errori e messaggi di stato
             setStatusMessage('');
@@ -262,24 +276,13 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-                    {/* Campo DDT (ORA MODIFICABILE - LA CHIAVE PRIMARIA) */}
+                    {/* Campo DDT */}
                     <div>
-                        <label htmlFor="ddt" className="block text-sm font-medium text-gray-700">DDT (Chiave Primaria) *</label>
+                        <label htmlFor="ddt" className="block text-sm font-medium text-gray-700">DDT *</label>
                         <input
                             id="ddt"
                             type="text"
                             {...register("ddt", { required: true })}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
-                        />
-                    </div>
-
-                    {/* Campo Partita IVA */}
-                    <div>
-                        <label htmlFor="piva" className="block text-sm font-medium text-gray-700">P. IVA *</label>
-                        <input
-                            id="piva"
-                            type="text"
-                            {...register("piva", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>
@@ -295,13 +298,24 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
                         />
                     </div>
 
+                    {/* Campo Partita IVA */}
+                    <div>
+                        <label htmlFor="piva" className="block text-sm font-medium text-gray-700">P. IVA</label>
+                        <input
+                            id="piva"
+                            type="text"
+                            {...register("piva", { required: false })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
+                        />
+                    </div>
+
                     {/* Campo Telefono */}
                     <div>
                         <label htmlFor="telefono" className="block text-sm font-medium text-gray-700">Telefono</label>
                         <input
                             id="telefono"
                             type="tel"
-                            {...register("telefono")}
+                            {...register("telefono", { required: false })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>
@@ -312,7 +326,18 @@ const EditClientModal: React.FC<EditClientModalProps> = ({
                         <input
                             id="email"
                             type="email"
-                            {...register("email")}
+                            {...register("email", { required: false })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
+                        />
+                    </div>
+
+                    {/* Campo Indirizzo */}
+                    <div>
+                        <label htmlFor="indirizzo" className="block text-sm font-medium text-gray-700">Indirizzo</label>
+                        <input
+                            id="indirizzo"
+                            type="text"
+                            {...register("indirizzo", { required: false })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>

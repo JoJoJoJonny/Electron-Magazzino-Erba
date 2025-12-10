@@ -18,8 +18,8 @@ ipcMain.handle('db-get-all', (_event, tableName) => {
 ipcMain.handle('db-insert-cliente', (_event, datiCliente) => {
     try {
         const stmt = db.prepare(`
-            INSERT INTO clienti (ddt, piva, nome, telefono, email)
-            VALUES (@ddt, @piva, @nome, @telefono, @email)
+            INSERT INTO clienti (ddt, nome, piva, telefono, email, indirizzo)
+            VALUES (@ddt, @piva, @nome, @telefono, @email, @indirizzo)
         `);
 
         const info = stmt.run(datiCliente);
@@ -50,10 +50,11 @@ ipcMain.handle('db-update-cliente', (_event, datiClienteAggiornati) => {
         const stmt = db.prepare(`
             UPDATE clienti 
             SET ddt = @ddt, 
-                piva = @piva, 
                 nome = @nome, 
+                piva = @piva, 
                 telefono = @telefono, 
-                email = @email
+                email = @email,
+                indirizzo = @indirizzo
             WHERE ROWID = @rowid
         `);
 
@@ -616,6 +617,186 @@ ipcMain.handle('db-get-statistiche', () => {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
         console.error("Errore durante il recupero delle statistiche:", errorMessage);
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+
+
+
+
+
+
+
+
+
+ipcMain.handle('db-prodotto-in-entrata', (_event, datiProdotto) => {
+
+    try {
+        //prima prendo il prezzo unitario per il calcolo del valore
+        const getPrezzoStmt = db.prepare(`
+            SELECT prezzo
+            FROM articoli
+            WHERE cod = @codArticolo
+        `);
+
+        const articolo = getPrezzoStmt.get({ codArticolo: datiProdotto.codArticolo }) as ArticoloPrezzo;
+
+        if (!articolo) {
+            // Se l'articolo non è stato trovato nel DB, lanciamo un errore
+            throw new Error(`Articolo non trovato per il codice: ${datiProdotto.codArticolo}`);
+        }
+
+        const prezzo = articolo.prezzo;
+
+        if (!prezzo || typeof prezzo !== 'number') {
+            // Se l'articolo non esiste o il prezzo non è valido, interrompiamo la transazione.
+            throw new Error(`Articolo non trovato o prezzo unitario non valido per il COD Articolo: ${datiProdotto.codArticolo}`);
+        }
+
+        const valore = parseFloat((prezzo * datiProdotto.quantita).toFixed(2));
+
+        const stmt = db.prepare(`
+            INSERT INTO prodotti (ddtCliente, codArticolo, quantita, dataProduzione, valore, stoccaggio)
+            VALUES (@ddtCliente, @codArticolo, @quantita, @dataProduzione, @valore, @stoccaggio)
+        `);
+
+        const info = stmt.run({
+            ddtCliente: datiProdotto.ddtCliente,
+            codArticolo: datiProdotto.codArticolo,
+            quantita: datiProdotto.quantita,
+            dataProduzione: datiProdotto.dataProduzione,
+            valore: valore, // Usa il valore calcolato
+            stoccaggio: datiProdotto.stoccaggio
+        });
+
+        const stmt2 = db.prepare(`
+            INSERT INTO transazioni (ddtCliente, codArticolo, quantita, valore, tipo)
+            VALUES (@ddtCliente, @codArticolo, @quantita, @valore, @tipo)
+        `);
+        stmt2.run({
+            ddtCliente: datiProdotto.ddtCliente,
+            codArticolo: datiProdotto.codArticolo,
+            quantita: datiProdotto.quantita,
+            valore: valore, // Usa il valore calcolato
+            tipo: "in",
+        });
+// Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-prodotti', { status: 'success' });
+        }
+
+        return { success: true, message: 'Prodotto e transazione inseriti', lastInsertRowid: info.lastInsertRowid };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'inserimento del prodotto:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. cod duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID specificato (chiave primaria) esiste già." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-prodotto-in-uscita', (_event, datiProdotto) => {
+    try {
+        //prima prendo il prezzo unitario per il calcolo del valore
+        const getPrezzoStmt = db.prepare(`
+            SELECT prezzo
+            FROM articoli
+            WHERE cod = @codArticolo
+        `);
+
+        const articolo = getPrezzoStmt.get({ codArticolo: datiProdotto.codArticolo }) as ArticoloPrezzo;
+
+        if (!articolo) {
+            // Se l'articolo non è stato trovato nel DB, lanciamo un errore
+            throw new Error(`Articolo non trovato per il codice: ${datiProdotto.codArticolo}`);
+        }
+
+        const prezzo = articolo.prezzo;
+
+        if (!prezzo || typeof prezzo !== 'number') {
+            // Se l'articolo non esiste o il prezzo non è valido, interrompiamo la transazione.
+            throw new Error(`Articolo non trovato o prezzo unitario non valido per il COD Articolo: ${datiProdotto.codArticolo}`);
+        }
+
+        const nuovaQuantita = datiProdotto.quantita-datiProdotto.quantitaUscita;
+
+        const valore = parseFloat((prezzo * nuovaQuantita).toFixed(2));
+
+        const valoreTransazione = parseFloat((prezzo * datiProdotto.quantitaUscita).toFixed(2));
+
+        if(nuovaQuantita > 0) {
+            const stmt = db.prepare(`
+                UPDATE prodotti 
+                SET quantita = @quantita,
+                    valore = @valore
+                WHERE ROWID = @rowid
+            `);
+
+            // Esegui l'aggiornamento.
+            // L'oggetto datiProdottoAggiornati deve contenere tutti i campi
+            // e l'ID (@id) per la clausola WHERE.
+            const info = stmt.run({
+                quantita: nuovaQuantita,
+                valore: valore, // Usa il valore calcolato
+                rowid: datiProdotto.rowid
+            });
+
+            if (info.changes === 0) {
+                return { error: "Nessun prodotto trovato con l'ID specificato o nessun dato è stato modificato." };
+            }
+
+            //return { success: true, message: 'Prodotto aggiornato', changes: info.changes };
+
+        }else if(nuovaQuantita == 0) {
+            const stmt = db.prepare(`
+                DELETE FROM prodotti 
+                WHERE ROWID = @rowid
+            `);
+
+            // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+            // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+            const info = stmt.run({ rowid: datiProdotto.rowid });
+
+            if (info.changes === 0) {
+                return { error: "Nessun prodotto trovato con l'ID specificato per l'eliminazione." };
+            }
+
+            //return { success: true, message: 'Prodotto eliminato', changes: info.changes };
+        }
+
+        // Segnala al processo di rendering che i dati dei prodotti devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-prodotti', { status: 'success' });
+        }
+
+        const stmt2 = db.prepare(`
+            INSERT INTO transazioni (ddtCliente, codArticolo, quantita, valore, tipo)
+            VALUES (@ddtCliente, @codArticolo, @quantita, @valore, @tipo)
+        `);
+        stmt2.run({
+            ddtCliente: datiProdotto.ddtCliente,
+            codArticolo: datiProdotto.codArticolo,
+            quantita: datiProdotto.quantitaUscita,
+            valore: valoreTransazione, // Usa il valore calcolato
+            tipo: "out",
+        });
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'aggiornamento del prodotto:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. COD duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID specificato (chiave primaria) esiste già in un altro record." };
+        }
 
         return { error: `Errore database: ${errorMessage}` };
     }

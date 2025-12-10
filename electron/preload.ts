@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateProdotto: (data: any) => ipcRenderer.invoke('db-update-prodotto', data),
   deleteProdotto: (id: any) => ipcRenderer.invoke('db-delete-prodotto', id),
 
+  entrataProdotto: (data: any) => ipcRenderer.invoke('db-prodotto-in-entrata', data),
+  uscitaProdotto: (data: any) => ipcRenderer.invoke('db-prodotto-in-uscita', data),
+
   // CRUD - attrezzature
   insertAttrezzatura: (data: any) => ipcRenderer.invoke('db-insert-attrezzatura', data),
   updateAttrezzatura: (data: any) => ipcRenderer.invoke('db-update-attrezzatura', data),
@@ -57,5 +60,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getStatistiche: () => ipcRenderer.invoke('db-get-all'),
 
-  // TODO: Altre API andranno qui (es. insertProdotto, updateProdotto, ecc.)
 });
