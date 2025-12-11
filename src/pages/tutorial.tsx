@@ -49,7 +49,7 @@ export const Tutorial = () => {
                         <span className="font-bold text-gray-800">Tasto "<span className="text-green-500">Aggiungi</span>"</span>
                         <p className="text-sm text-gray-600">
                             Serve per inserire un nuovo elemento (Cliente, Articolo, Prodotto ecc.). <br/>
-                            È una semplice inserimento che NON conta come movimento di magazzino, e quindi NON genera una transazione.</p>
+                            È un semplice inserimento che NON conta come movimento di magazzino, e quindi NON genera una transazione.</p>
                     </div>
                     <div className="p-4 bg-white rounded-md shadow-sm">
                         <span className="font-bold text-gray-800">Tasto "<span className="text-yellow-500">Modifica</span>"</span>
@@ -78,7 +78,7 @@ export const Tutorial = () => {
                     3. Transazioni dei Prodotti - I Movimenti Tracciati
                 </h2>
                 <p className="text-gray-700 leading-relaxed mb-3">
-                    La sezione Prodotti, essendo relative anche alle consegne, presenta due tasti aggiuntivi.
+                    La sezione Prodotti, essendo relativa anche alle consegne, presenta due tasti aggiuntivi.
                 </p>
         
                 <div className="space-y-4">

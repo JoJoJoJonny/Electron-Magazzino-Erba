@@ -169,7 +169,7 @@ const TabellaTransazioni: React.FC<TabellaTransazioniProps> = ({ onTransactionSe
                         { key: 'codArticolo', label: 'Cod Articolo' },
                         { key: 'quantita', label: 'Quantità' },
                         { key: 'valore', label: 'Valore' },
-                        { key: 'data', label: 'Data' },
+                        { key: 'data', label: 'Data e Ora' },
                     ] as { key: SortKey, label: string }[]).map(({ key, label }) => (
                         <th
                             key={key}

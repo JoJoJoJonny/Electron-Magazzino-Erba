@@ -19,7 +19,7 @@ ipcMain.handle('db-insert-cliente', (_event, datiCliente) => {
     try {
         const stmt = db.prepare(`
             INSERT INTO clienti (ddt, nome, piva, telefono, email, indirizzo)
-            VALUES (@ddt, @piva, @nome, @telefono, @email, @indirizzo)
+            VALUES (@ddt, @nome, @piva, @telefono, @email, @indirizzo)
         `);
 
         const info = stmt.run(datiCliente);
