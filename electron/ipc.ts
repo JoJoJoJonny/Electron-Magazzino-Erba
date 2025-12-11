@@ -484,6 +484,117 @@ ipcMain.handle('db-get-unique-prodotti-keys', (_event) => {
 
 
 
+ipcMain.handle('db-insert-semilavorato', (_event, datiSemilavorato) => {
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO semilavorati (nome, quantita, stoccaggio)
+            VALUES (@nome, @quantita, @stoccaggio)
+        `);
+
+        const info = stmt.run(datiSemilavorato);
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-semilavorati', { status: 'success' });
+        }
+
+        return { success: true, message: 'Semilavorato inserito', lastInsertRowid: info.lastInsertRowid };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'inserimento del semilavorato:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. cod duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID esiste già." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-update-semilavorato', (_event, datiSemilavoratoAggiornati) => {
+    try {
+        const stmt = db.prepare(`
+            UPDATE semilavorati
+            SET nome = @nome,
+                quantita = @quantita,
+                stoccaggio = @stoccaggio
+            WHERE ROWID = @rowid
+        `);
+
+        const info = stmt.run(datiSemilavoratoAggiornati);
+
+        if (info.changes === 0) {
+            return { error: "Nessun semilavorato trovato con l'ID specificato o nessun dato è stato modificato." };
+        }
+
+        // Segnala al processo di rendering che i dati devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-semilavorato', { status: 'success' });
+        }
+
+        return { success: true, message: 'Semilavorato aggiornato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'aggiornamento del semilavorato:", errorMessage);
+
+        // Controllo specifico per violazione di vincolo (es. DDT duplicato)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "L'ID specificato esiste già in un altro record." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-delete-semilavorato', (_event, idSemilavorato) => {
+    try {
+        const stmt = db.prepare(`
+            DELETE FROM semilavorati 
+            WHERE ROWID = @rowid
+        `);
+
+        // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+        // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+        const info = stmt.run({ rowid: idSemilavorato });
+
+        if (info.changes === 0) {
+            return { error: "Nessun semilavorato trovato con l'ID specificato per l'eliminazione." };
+        }
+
+        // Segnala al processo di rendering che i dati dell'attrezzatura devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-semilavorato', { status: 'success' });
+        }
+
+        return { success: true, message: 'Semilavorato eliminato', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione del semilavorato:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare il semilavorato: sono presenti elementi collegati a questo ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 ipcMain.handle('db-insert-attrezzatura', (_event, datiAttrezzatura) => {
     try {
         const stmt = db.prepare(`
@@ -796,6 +907,129 @@ ipcMain.handle('db-prodotto-in-uscita', (_event, datiProdotto) => {
         // Controllo specifico per violazione di vincolo (es. COD duplicato)
         if (errorMessage.includes('SQLITE_CONSTRAINT')) {
             return { error: "L'ID specificato (chiave primaria) esiste già in un altro record." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+
+
+
+
+
+ipcMain.handle('db-delete-transazione', (_event, idTransazione) => {
+    try {
+        const stmt = db.prepare(`
+            DELETE FROM transazioni 
+            WHERE ROWID = @rowid
+        `);
+
+        // Esegui l'eliminazione. Passiamo l'ID ricevuto dal frontend
+        // come parametro @id (usiamo un oggetto { id: valore } per il binding)
+        const info = stmt.run({ rowid: idTransazione });
+
+        if (info.changes === 0) {
+            return { error: "Nessuna transazione trovata con l'ID specificato per l'eliminazione." };
+        }
+
+        // Segnala al processo di rendering che i dati dell'attrezzatura devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-transazioni', { status: 'success' });
+        }
+
+        return { success: true, message: 'Transazione eliminata', changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione della transazione:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare la transazione: sono presenti elementi collegati a questo ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+const formatDate = (date: Date): string => {
+    const y = date.getFullYear();
+    // getMonth() restituisce 0 per Gennaio, quindi aggiungiamo 1
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
+ipcMain.handle('db-delete-month-transazioni', (_event) => {
+    try {
+        const today = new Date();
+
+        // 1. Calcola il PRIMO giorno del mese CORRENTE (es. 2025-12-01)
+        // Impostiamo il giorno a 1 e le ore/minuti/secondi a 0 per avere l'inizio esatto del mese.
+        const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+
+        // 2. Formatta la data di inizio per il database
+        const cutoffDate = formatDate(firstDayOfCurrentMonth); // Esempio: "2025-12-01"
+
+        const stmt = db.prepare(`
+            DELETE FROM transazioni 
+            WHERE data < @cutoffDate
+        `);
+
+        // Esegui l'eliminazione
+        // La variabile cutoffDate è "YYYY-MM-01", quindi saranno eliminate tutte le date dei mesi precedenti.
+        const info = stmt.run({ cutoffDate });
+
+        // Segnala al processo di rendering che i dati delle transazioni devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-transazioni', { status: 'success' });
+        }
+
+        return {
+            success: true,
+            message: `Eliminate ${info.changes} transazioni precedenti al mese corrente (mantenute solo quelle da ${cutoffDate} in poi).`,
+            changes: info.changes
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione delle transazioni dei mesi precedenti:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare le transazioni: sono presenti elementi collegati a qualche ID." };
+        }
+
+        return { error: `Errore database: ${errorMessage}` };
+    }
+});
+
+ipcMain.handle('db-delete-all-transazioni', (_event) => {
+    try {
+        // senza la clausa WHERE, elimina tutto
+        const stmt = db.prepare(`
+            DELETE FROM transazioni
+        `);
+
+        const info = stmt.run();
+
+        // Segnala al processo di rendering che i dati dell'attrezzatura devono essere aggiornati
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (mainWindow) {
+            mainWindow.webContents.send('refresh-transazioni', { status: 'success' });
+        }
+
+        return { success: true, message: `Tutte le transazioni sono state eliminate. (${info.changes} record)`, changes: info.changes };
+
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto';
+        console.error("Errore nell'eliminazione di tutte le transazioni:", errorMessage);
+
+        // Controllo se l'eliminazione è impedita da vincoli (es. FOREIGN KEY)
+        if (errorMessage.includes('SQLITE_CONSTRAINT')) {
+            return { error: "Impossibile eliminare le transazioni: sono presenti elementi collegati a qualche ID." };
         }
 
         return { error: `Errore database: ${errorMessage}` };

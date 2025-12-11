@@ -49,14 +49,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   insertProdotto: (data: any) => ipcRenderer.invoke('db-insert-prodotto', data),
   updateProdotto: (data: any) => ipcRenderer.invoke('db-update-prodotto', data),
   deleteProdotto: (id: any) => ipcRenderer.invoke('db-delete-prodotto', id),
-
   entrataProdotto: (data: any) => ipcRenderer.invoke('db-prodotto-in-entrata', data),
   uscitaProdotto: (data: any) => ipcRenderer.invoke('db-prodotto-in-uscita', data),
+
+  // CRUD - semilavorati
+  insertSemilavorato: (data: any) => ipcRenderer.invoke('db-insert-semilavorato', data),
+  updateSemilavorato: (data: any) => ipcRenderer.invoke('db-update-semilavorato', data),
+  deleteSemilavorato: (id: any) => ipcRenderer.invoke('db-delete-semilavorato', id),
 
   // CRUD - attrezzature
   insertAttrezzatura: (data: any) => ipcRenderer.invoke('db-insert-attrezzatura', data),
   updateAttrezzatura: (data: any) => ipcRenderer.invoke('db-update-attrezzatura', data),
   deleteAttrezzatura: (id: any) => ipcRenderer.invoke('db-delete-attrezzatura', id),
+
+  // CRUD - transazioni
+  deleteTransazione: (id: any) => ipcRenderer.invoke('db-delete-transazione', id),
+  deleteMonthTransazioni: () => ipcRenderer.invoke('db-delete-month-transazioni'),
+  deleteAllTransazioni: () => ipcRenderer.invoke('db-delete-all-transazioni'),
 
   getStatistiche: () => ipcRenderer.invoke('db-get-all'),
 

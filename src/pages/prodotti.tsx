@@ -152,6 +152,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ isOpen, onClose, avai
                             id="quantita"
                             type="number"
                             step="1"
+                            min="1"
                             {...register("quantita", { required: true , valueAsNumber: true, min: {value: 1, message: "La quantità deve essere almeno 1"}})}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
@@ -374,6 +375,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                             id="quantita"
                             type="number"
                             step="1"
+                            min="1"
                             {...register("quantita", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
@@ -570,6 +572,7 @@ const EntrataProdottoModal: React.FC<EntrataProdottoModalProps> = ({ isOpen, onC
                             id="quantita"
                             type="number"
                             step="1"
+                            min="1"
                             {...register("quantita", { required: true , valueAsNumber: true, min: {value: 1, message: "La quantità deve essere almeno 1"}})}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
@@ -1054,7 +1057,7 @@ export const Prodotti = () => {
                         className="flex items-center px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition"
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v12m0 0l-4-4m4 4l4-4" />
                         </svg>
                         In Entrata
                     </button>

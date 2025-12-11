@@ -3,38 +3,38 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
-// Definisco l'interfaccia dei dati del articolo
-interface ArticoloInputs {
-    cod: string;
-    descrizione: string;
-    prezzo: number;
+// Definisco l'interfaccia dei dati del semilavorato
+interface SemilavoratoInputs {
+    nome: string;
+    quantita: string;
+    stoccaggio: string;
 }
 
-// Interfaccia che rappresenta il Articolo completo letto dal DB (include l'ID interno di SQLite)
+// Interfaccia che rappresenta il Semilavorato completo letto dal DB (include l'ID interno di SQLite)
 // L'ID interno sarà usato per l'UPDATE della riga.
-export interface ArticoloRecord extends ArticoloInputs {
+export interface SemilavoratoRecord extends SemilavoratoInputs {
     rowid: number; // Assumiamo che il DB usi un ID numerico (ROWID) per l'identificazione interna
 }
 
-interface AddArticleModalProps {
+interface AddSemifinishedModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-const AddArticleModal: React.FC<AddArticleModalProps> = ({ isOpen, onClose }) => {
-    const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<ArticoloInputs>();
+const AddSemifinishedModal: React.FC<AddSemifinishedModalProps> = ({ isOpen, onClose }) => {
+    const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<SemilavoratoInputs>();
     const [statusMessage, setStatusMessage] = useState('');
 
     if (!isOpen) return null;
 
-    const onSubmit: SubmitHandler<ArticoloInputs> = async (data) => {
+    const onSubmit: SubmitHandler<SemilavoratoInputs> = async (data) => {
         setStatusMessage('Salvataggio in corso...');
 
         try {
-            const result = await window.ipcRenderer.invoke('db-insert-articolo', data);
+            const result = await window.ipcRenderer.invoke('db-insert-semilavorato', data);
 
             if (result && result.success) {
-                setStatusMessage('Articolo inserito con successo!');
+                setStatusMessage('Semilavorato inserito con successo!');
                 reset();
                 onClose();
             } else {
@@ -55,44 +55,43 @@ const AddArticleModal: React.FC<AddArticleModalProps> = ({ isOpen, onClose }) =>
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg">
-                <h2 className="text-2xl font-bold mb-4 text-myColor">Aggiungi Nuovo Articolo</h2>
+                <h2 className="text-2xl font-bold mb-4 text-myColor">Aggiungi Nuovo Semilavorato</h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-                    {/* Campo COD */}
+                    {/* Campo Nome */}
                     <div>
-                        <label htmlFor="cod" className="block text-sm font-medium text-gray-700">COD *</label>
+                        <label htmlFor="nome" className="block text-sm font-medium text-gray-700">Nome *</label>
                         <input
-                            id="cod"
+                            id="nome"
                             type="text"
-                            {...register("cod", { required: true })}
+                            {...register("nome", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
                     </div>
 
-                    {/* Campo descrizione */}
+                    {/* Campo quantita */}
                     <div>
-                        <label htmlFor="descrizione" className="block text-sm font-medium text-gray-700">Descrizione *</label>
+                        <label htmlFor="quantita" className="block text-sm font-medium text-gray-700">Quantità *</label>
                         <input
-                            id="descrizione"
+                            id="quantita"
                             type="text"
-                            {...register("descrizione", { required: true })}
+                            {...register("quantita", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
                     </div>
 
-                    {/* Campo prezzo */}
+                    {/* Campo stoccaggio */}
                     <div>
-                        <label htmlFor="prezzo" className="block text-sm font-medium text-gray-700">Prezzo *</label>
+                        <label htmlFor="stoccaggio" className="block text-sm font-medium text-gray-700">Stoccaggio *</label>
                         <input
-                            id="prezzo"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            {...register("prezzo", { required: true })}
+                            id="stoccaggio"
+                            type="text"
+                            {...register("stoccaggio", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-myColor focus:border-myColor"
                         />
                     </div>
+
 
                     {/* Messaggio di stato */}
                     {statusMessage && (
@@ -131,21 +130,21 @@ const AddArticleModal: React.FC<AddArticleModalProps> = ({ isOpen, onClose }) =>
 
 
 
-interface EditArticleModalProps {
+interface EditSemifinishedModalProps {
     isOpen: boolean;
     onClose: () => void;
-    articleToEdit: ArticoloRecord; // Il articolo da popolare e modificare
+    semifinishedToEdit: SemilavoratoRecord; // Il semilavorato da popolare e modificare
     forceRefresh: () => void;
 }
 
 // ... (omissis)
-const EditArticleModal: React.FC<EditArticleModalProps> = ({
-                                                             isOpen,
-                                                             onClose,
-                                                             articleToEdit,
-                                                             forceRefresh
-                                                         }) => {
-    // Usiamo 'useForm' con il tipo ArticoloInputs (che è l'output del form)
+const EditSemifinishedModal: React.FC<EditSemifinishedModalProps> = ({
+                                                               isOpen,
+                                                               onClose,
+                                                               semifinishedToEdit,
+                                                               forceRefresh
+                                                           }) => {
+    // Usiamo 'useForm' con il tipo SemilavoratoInputs (che è l'output del form)
     const {
         register,
         handleSubmit,
@@ -153,63 +152,63 @@ const EditArticleModal: React.FC<EditArticleModalProps> = ({
         formState: { isSubmitting },
         setValue,
         watch
-    } = useForm<ArticoloInputs>({
+    } = useForm<SemilavoratoInputs>({
         // Passiamo i valori del record per i default. React Hook Form li accetterà.
         defaultValues: {
-            cod: articleToEdit.cod,
-            descrizione: articleToEdit.descrizione,
-            prezzo: articleToEdit.prezzo,
+            nome: semifinishedToEdit.nome,
+            quantita: semifinishedToEdit.quantita,
+            stoccaggio: semifinishedToEdit.stoccaggio,
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
 
     // Stato calcolato per sapere se i dati sono cambiati
-    // Confrontiamo i valori correnti del form (formValues, tipo ArticoloInputs)
-    // con i valori iniziali (articleToEdit, tipo ArticoloRecord)
+    // Confrontiamo i valori correnti del form (formValues, tipo SemilavoratoInputs)
+    // con i valori iniziali (semifinishedToEdit, tipo SemilavoratoRecord)
     const formValues = watch();
 
-    // Dobbiamo ciclare solo sulle chiavi che esistono in ArticoloInputs
-    const keysToCompare: (keyof ArticoloInputs)[] = ['cod', 'descrizione', 'prezzo'];
+    // Dobbiamo ciclare solo sulle chiavi che esistono in SemilavoratoInputs
+    const keysToCompare: (keyof SemilavoratoInputs)[] = ['nome', 'quantita', 'stoccaggio'];
 
     // Controlla se almeno uno dei campi è diverso
-    const isDirty = keysToCompare.some(key => formValues[key] !== articleToEdit[key]);
+    const isDirty = keysToCompare.some(key => formValues[key] !== semifinishedToEdit[key]);
 
 
-    // Effetto per aggiornare i valori del form se il articolo da editare cambia
-    // Questo è cruciale quando si seleziona un NUOVO articolo per la modifica.
+    // Effetto per aggiornare i valori del form se il semilavorato da editare cambia
+    // Questo è cruciale quando si seleziona un NUOVO semilavorato per la modifica.
     useEffect(() => {
-        if (articleToEdit) {
-            // Usiamo articleToEdit.rowid come trigger per resettare lo stato interno del form
+        if (semifinishedToEdit) {
+            // Usiamo semifinishedToEdit.rowid come trigger per resettare lo stato interno del form
             // e forzare l'aggiornamento dei campi.
-            // NON possiamo confrontare articleToEdit.rowid con formValues.rowid perché formValues non ha un campo rowid!
-            setValue('cod', articleToEdit.cod);
-            setValue('descrizione', articleToEdit.descrizione);
-            setValue('prezzo', articleToEdit.prezzo);
+            // NON possiamo confrontare semifinishedToEdit.rowid con formValues.rowid perché formValues non ha un campo rowid!
+            setValue('nome', semifinishedToEdit.nome);
+            setValue('quantita', semifinishedToEdit.quantita);
+            setValue('stoccaggio', semifinishedToEdit.stoccaggio);
 
             // Resettiamo eventuali errori e messaggi di stato
             setStatusMessage('');
         }
-    }, [articleToEdit, setValue]); // Dipendiamo solo da articleToEdit e setValue
+    }, [semifinishedToEdit, setValue]); // Dipendiamo solo da semifinishedToEdit e setValue
 
     if (!isOpen) return null;
 // ... (il resto del componente continua normalmente)
 
-    const onSubmit: SubmitHandler<ArticoloInputs> = async (data) => {
+    const onSubmit: SubmitHandler<SemilavoratoInputs> = async (data) => {
         setStatusMessage('Salvataggio modifiche in corso...');
 
         try {
             // Chiamata IPC per l'aggiornamento
             // NOTA: Passiamo sia i dati aggiornati che l'ID interno per la WHERE
-            const result = await window.ipcRenderer.invoke('db-update-articolo', {
+            const result = await window.ipcRenderer.invoke('db-update-semilavorato', {
                 // Passiamo l'ID del record e il COD *originale* se ne avessimo bisogno.
                 // Per ora, ci affidiamo all'ID interno (ROWID) per la lookup.
-                rowid: articleToEdit.rowid,
+                rowid: semifinishedToEdit.rowid,
                 // Passiamo i dati modificati, inclusa la nuova cod
                 ...data
             });
 
             if (result && result.success) {
-                setStatusMessage('Articolo aggiornato con successo!');
+                setStatusMessage('Semilavorato aggiornato con successo!');
                 // Non resettiamo subito il form per mostrare il messaggio di successo,
                 // ma chiudiamo il modale per far vedere i nuovi dati in tabella.
                 onClose();
@@ -232,41 +231,39 @@ const EditArticleModal: React.FC<EditArticleModalProps> = ({
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg">
-                <h2 className="text-2xl font-bold mb-4 text-yellow-600">Modifica Articolo ID Interno: {articleToEdit.rowid}</h2>
+                <h2 className="text-2xl font-bold mb-4 text-yellow-600">Modifica Semilavorato ID Interno: {semifinishedToEdit.rowid}</h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-                    {/* Campo COD (ORA MODIFICABILE - LA CHIAVE PRIMARIA) */}
+                    {/* Campo nome */}
                     <div>
-                        <label htmlFor="cod" className="block text-sm font-medium text-gray-700">COD *</label>
+                        <label htmlFor="nome" className="block text-sm font-medium text-gray-700">Nome *</label>
                         <input
-                            id="cod"
+                            id="nome"
                             type="text"
-                            {...register("cod", { required: true })}
+                            {...register("nome", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>
 
-                    {/* Campo descrizione */}
+                    {/* Campo quantita */}
                     <div>
-                        <label htmlFor="descrizione" className="block text-sm font-medium text-gray-700">Descrizione *</label>
+                        <label htmlFor="quantita" className="block text-sm font-medium text-gray-700">Quantità *</label>
                         <input
-                            id="descrizione"
+                            id="quantita"
                             type="text"
-                            {...register("descrizione", { required: true })}
+                            {...register("quantita", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>
 
-                    {/* Campo prezzo */}
+                    {/* Campo stoccaggio */}
                     <div>
-                        <label htmlFor="prezzo" className="block text-sm font-medium text-gray-700">Prezzo *</label>
+                        <label htmlFor="stoccaggio" className="block text-sm font-medium text-gray-700">Stoccaggio *</label>
                         <input
-                            id="prezzo"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            {...register("prezzo", { required: true })}
+                            id="stoccaggio"
+                            type="text"
+                            {...register("stoccaggio", { required: true })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-yellow-600 focus:border-yellow-600"
                         />
                     </div>
@@ -363,17 +360,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
 
 
-import TabellaArticoli from '@/components/tabellaArticoli';
+import TabellaSemilavorati from '@/components/tabellaSemilavorati';
 
-export const Articoli = () => {
+export const Semilavorati = () => {
     // Stato per controllare l'apertura/chiusura del modale di AGGIUNTA
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // NUOVO STATO: Stato per controllare l'apertura/chiusura del modale di MODIFICA
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // NUOVO STATO: Stato per tenere traccia del articolo selezionato (per Modifica/Elimina)
-    const [selectedArticle, setSelectedArticle] = useState<ArticoloRecord | null>(null);
+    // NUOVO STATO: Stato per tenere traccia del semilavorato selezionato (per Modifica/Elimina)
+    const [selectedSemifinished, setSelectedSemifinished] = useState<SemilavoratoRecord | null>(null);
 
     // NUOVO STATO: Messaggio di stato globale (per errori/successo operazioni)
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' | 'info' } | null>(null);
@@ -381,14 +378,14 @@ export const Articoli = () => {
     // NUOVO STATO: Stato per controllare l'apertura/chiusura del modale di CONFERMA eliminazione
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-    // Funzione per gestire la selezione di un articolo
-    const handleArticleSelect = (article: ArticoloRecord | null) => {
-        setSelectedArticle(article);
+    // Funzione per gestire la selezione di un semilavorato
+    const handleSemifinishedSelect = (semifinished: SemilavoratoRecord | null) => {
+        setSelectedSemifinished(semifinished);
     };
 
     // Funzione per aprire il modale di modifica
     const openEditModal = () => {
-        if (selectedArticle) {
+        if (selectedSemifinished) {
             setIsEditModalOpen(true);
         }
     };
@@ -396,12 +393,12 @@ export const Articoli = () => {
     // Funzione per chiudere il modale di modifica e pulire lo stato di selezione
     const closeEditModal = () => {
         setIsEditModalOpen(false);
-        setSelectedArticle(null);
+        setSelectedSemifinished(null);
     };
 
     // Funzione per aprire il modale di aggiunta
     const openAddModal = () => {
-        setSelectedArticle(null); // Assicurati che non ci siano selezioni attive
+        setSelectedSemifinished(null); // Assicurati che non ci siano selezioni attive
         setIsAddModalOpen(true);
     };
 
@@ -417,21 +414,21 @@ export const Articoli = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
 
-    // Ascolta l'evento 'refresh-articoli' dal processo principale (Electron)
+    // Ascolta l'evento 'refresh-semilavorati' dal processo principale (Electron)
     useEffect(() => {
         if (window.ipcRenderer) {
             // Definiamo il tipo esatto del listener che ci aspettiamo
             type IpcListenerSubscription = (...args: any[]) => void;
 
             // 1. Usiamo 'any' per consentire l'assegnazione, ignorando il conflitto sul valore di ritorno di 'on'.
-            const subscription: any = window.ipcRenderer.on('refresh-articoli', forceRefresh);
+            const subscription: any = window.ipcRenderer.on('refresh-semilavorati', forceRefresh);
 
             // 2. La funzione di cleanup usa il casting per dire a TypeScript che 'subscription'
             // è la funzione esatta che 'off' si aspetta.
             return () => {
                 // Applichiamo il casting esplicito alla variabile 'subscription'
                 // per conformarla al tipo richiesto dal metodo 'off'.
-                window.ipcRenderer.off('refresh-articoli', subscription as IpcListenerSubscription);
+                window.ipcRenderer.off('refresh-semilavorati', subscription as IpcListenerSubscription);
             };
         }
     }, []);
@@ -451,14 +448,14 @@ export const Articoli = () => {
 
     const forceRefresh = () => {
         setRefreshKey(prevKey => prevKey + 1);
-        setSelectedArticle(null); // Deseleziona al refresh
+        setSelectedSemifinished(null); // Deseleziona al refresh
         setMessage(null); // Pulisce il messaggio di stato
     };
 
     // NUOVO STATO INTERMEDIO per l'eliminazione.
     const handleDelete = () => {
-        if (!selectedArticle || !selectedArticle.rowid) {
-            setMessage({ text: "Nessun articolo valido selezionato per l'eliminazione.", type: 'error' });
+        if (!selectedSemifinished || !selectedSemifinished.rowid) {
+            setMessage({ text: "Nessun semilavorato valido selezionato per l'eliminazione.", type: 'error' });
             return;
         }
 
@@ -471,17 +468,17 @@ export const Articoli = () => {
         setIsConfirmModalOpen(false); // Chiudi il modale subito
 
         // Protezione aggiuntiva
-        if (!selectedArticle || !selectedArticle.rowid) return;
+        if (!selectedSemifinished || !selectedSemifinished.rowid) return;
 
         try {
             // Chiama la funzione IPC passando solo l'ID (ROWID)
-            const result = await window.electronAPI.deleteArticolo(selectedArticle.rowid);
+            const result = await window.electronAPI.deleteSemilavorato(selectedSemifinished.rowid);
 
             if (result && 'error' in result) {
                 setMessage({ text: `Errore durante l'eliminazione: ${result.error}`, type: 'error' });
             } else {
                 setMessage({ text: result.message, type: 'success' });
-                // Forza il ricaricamento della tabella e deseleziona il articolo
+                // Forza il ricaricamento della tabella e deseleziona il semilavorato
                 forceRefresh();
             }
         } catch (e) {
@@ -496,7 +493,7 @@ export const Articoli = () => {
         <div className="p-6 space-y-6">
 
             {/* 1. Titolo della Pagina */}
-            <h1 className="text-3xl font-bold text-gray-800">Gestione Articoli</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Gestione Semilavorati</h1>
 
             {/* NUOVO BLOCCO: Messaggio di Stato */}
             {message && (
@@ -534,23 +531,23 @@ export const Articoli = () => {
                         Aggiungi
                     </button>
 
-                    {/* Tasto Modifica (Abilitato solo se un articolo è selezionato) */}
+                    {/* Tasto Modifica (Abilitato solo se un semilavorato è selezionato) */}
                     <button
                         onClick={openEditModal}
-                        disabled={!selectedArticle} // Disabilita se selectedArticle è null
+                        disabled={!selectedSemifinished} // Disabilita se selectedSemifinished è null
                         className={`flex items-center px-4 py-2 text-white font-semibold rounded-lg shadow-md transition 
-                            ${selectedArticle ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-yellow-300 opacity-50 cursor-not-allowed'}`}
+                            ${selectedSemifinished ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-yellow-300 opacity-50 cursor-not-allowed'}`}
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         Modifica
                     </button>
 
-                    {/* Tasto Elimina (Abilitato solo se un articolo è selezionato) */}
+                    {/* Tasto Elimina (Abilitato solo se un semilavorato è selezionato) */}
                     <button
                         onClick={handleDelete}
-                        disabled={!selectedArticle}
+                        disabled={!selectedSemifinished}
                         className={`flex items-center px-4 py-2 text-white font-semibold rounded-lg shadow-md transition 
-                            ${selectedArticle ? 'bg-red-600 hover:bg-red-700' : 'bg-red-300 opacity-50 cursor-not-allowed'}`}
+                            ${selectedSemifinished ? 'bg-red-600 hover:bg-red-700' : 'bg-red-300 opacity-50 cursor-not-allowed'}`}
                     >
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         Elimina
@@ -592,42 +589,42 @@ export const Articoli = () => {
 
             </div>
 
-            {/* 3. Visualizzazione della Tabella Articoli */}
+            {/* 3. Visualizzazione della Tabella Semilavorati */}
             <div className="min-h-screen pt-4">
-                {/* PASSAGGIO PROPS: selectedArticle (per evidenziazione) e handleArticleSelect (per aggiornare lo stato) */}
-                <TabellaArticoli
+                {/* PASSAGGIO PROPS: selectedSemifinished (per evidenziazione) e handleSemifinishedSelect (per aggiornare lo stato) */}
+                <TabellaSemilavorati
                     key={refreshKey}
-                    onArticleSelect={handleArticleSelect}
-                    selectedArticle={selectedArticle}
+                    onSemifinishedSelect={handleSemifinishedSelect}
+                    selectedSemifinished={selectedSemifinished}
                     // NUOVA PROP AGGIUNTA
                     searchTerm={searchTerm}
                 />
             </div>
 
             {/* 4. Inclusione dei Modali */}
-            <AddArticleModal
+            <AddSemifinishedModal
                 isOpen={isAddModalOpen}
                 onClose={closeAddModal}
             />
 
-            {/* Il Modale Modifica compare SOLO se un articolo è selezionato */}
-            {selectedArticle && (
-                <EditArticleModal
+            {/* Il Modale Modifica compare SOLO se un semilavorato è selezionato */}
+            {selectedSemifinished && (
+                <EditSemifinishedModal
                     isOpen={isEditModalOpen}
                     onClose={closeEditModal}
-                    articleToEdit={selectedArticle}
+                    semifinishedToEdit={selectedSemifinished}
                     forceRefresh={forceRefresh}
                 />
             )}
 
             {/* NUOVO BLOCCO: Modale di conferma eliminazione non bloccante */}
-            {selectedArticle && (
+            {selectedSemifinished && (
                 <ConfirmationModal
                     isOpen={isConfirmModalOpen}
                     onClose={() => setIsConfirmModalOpen(false)}
                     onConfirm={confirmDelete}
-                    title="Conferma Eliminazione Articolo"
-                    message={`Sei sicuro di voler eliminare definitivamente il articolo "${selectedArticle.descrizione}" (ROWID: ${selectedArticle.rowid})? Quest'azione non può essere annullata.`}
+                    title="Conferma Eliminazione Semilavorato"
+                    message={`Sei sicuro di voler eliminare definitivamente il semilavorato "${selectedSemifinished.nome}" (ROWID: ${selectedSemifinished.rowid})? Quest'azione non può essere annullata.`}
                     confirmButtonText="Sì, Elimina"
                     confirmButtonColor="bg-red-600"
                 />

@@ -51,6 +51,16 @@ export default {
     				'5': 'hsl(var(--chart-5))'
     			},
 				myColor: {
+					50:  'hsl(122 23% 95%)', // L=95%
+					100: 'hsl(122 23% 90%)', // L=90%
+					200: 'hsl(122 23% 80%)', // L=80%
+					300: 'hsl(122 23% 70%)', // L=70%
+					400: 'hsl(122 23% 60%)', // L=60%
+					500: 'hsl(122 23% 50%)', // Colore medio/principale
+					600: 'hsl(122 23% 40%)', // L=40%
+					700: 'hsl(122 23% 35%)', // L=35%
+					800: 'hsl(122 23% 30%)', // L=30%
+					900: 'hsl(122 23% 26%)', // Il tuo colore base originale (L=26%)
 					DEFAULT: 'hsl(var(--myColor))',
 					foreground: 'hsl(var(--myColor-foreground))',
 				}

@@ -74,9 +74,9 @@ function initDatabase() {
     db.exec(`
     CREATE TABLE IF NOT EXISTS semilavorati (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      quantita TEXT,
-      stoccaggio TEXT,
-      descrizione TEXT
+      nome TEXT,
+      quantita TEXT, --deve essere descrittiva, in quanto potrebbe essere in bancali, in kg, in unità ecc.
+      stoccaggio TEXT
     );
   `);
 
@@ -86,7 +86,7 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ddtCliente TEXT,
       codArticolo TEXT,
-      quantita TEXT,
+      quantita INTEGER,
       valore REAL,
       data DATETIME DEFAULT CURRENT_TIMESTAMP,
       tipo TEXT      --"in" oppure "out"
