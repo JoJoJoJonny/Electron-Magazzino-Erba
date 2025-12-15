@@ -193,7 +193,7 @@ ipcMain.handle('db-update-articolo', (_event, datiArticoloAggiornati) => {
         // Calcolo: valore = (nuovo prezzo) * quantita
         const updateProdottiStmt = db.prepare(`
             UPDATE prodotti
-            SET valore = @nuovoPrezzo * quantita
+            SET valore = ROUND(@nuovoPrezzo * quantita * 100) / 100.0 --dovrebbe risolvere il problema del floating point
             WHERE codArticolo = @codArticolo
         `);
 

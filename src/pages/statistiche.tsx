@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+import {usePriceVisibility} from "@/components/priceVisibilityContext.tsx";
+
 // Definisci l'interfaccia per i dati attesi dal backend (ipcMain)
 interface StatisticheData {
     numClienti: number;
@@ -8,20 +10,6 @@ interface StatisticheData {
     numProdottiTotali: number;
     valoreTotaleProdotti: number;
 }
-
-// Mappa delle statistiche per la visualizzazione
-/*const statisticheMap: { label: string; key: keyof StatisticheData; format?: (value: number) => string }[] = [
-    { label: 'Numero di Clienti', key: 'numClienti' },
-    { label: 'Numero di Articoli', key: 'numArticoli' },
-    { label: 'Numero di Attrezzature', key: 'numAttrezzature' },
-    { label: 'Numero di Prodotti Totali', key: 'numProdottiTotali' },
-    {
-        label: 'Valore Totale Prodotti',
-        key: 'valoreTotaleProdotti',
-        // Funzione di formattazione per la valuta
-        format: (value) => value.toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })
-    },
-];*/
 
 const StatCard: React.FC<{ title: string; value: number | string; unit?: string }> = ({ title, value, unit }) => (
     <div className="bg-white p-6 rounded-xl shadow-lg transition duration-300 hover:shadow-2xl border border-gray-100">
@@ -93,6 +81,8 @@ export const Statistiche = () => {
         <div className="p-8 text-center text-gray-500">Nessun dato statistico disponibile.</div>
     );
 
+    const { showPrices } = usePriceVisibility();
+
     return (
         <div className="p-6 space-y-6">
 
@@ -124,11 +114,13 @@ export const Statistiche = () => {
                 />
 
                 {/* Formattazione valuta per il Valore Totale */}
-                <StatCard
-                    title="Valore Inventario Totale"
-                    value={data.valoreTotaleProdotti.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    unit="€"
-                />
+                {showPrices && (
+                    <StatCard
+                        title="Valore Inventario Totale"
+                        value={data.valoreTotaleProdotti.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        unit="€"
+                    />
+                )}
 
             </div>
         </div>

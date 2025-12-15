@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 // Importiamo l'interfaccia ArticoloRecord dal componente padre
 import { ArticoloRecord } from '@/pages/articoli';
+import {usePriceVisibility} from "@/components/priceVisibilityContext.tsx";
+
+//import {usePriceVisibility} from "@/components/priceVisibilityContext.tsx";
 
 // Definisci le props che riceverà TabellaArticoli dal genitore
 interface TabellaArticoliProps {
@@ -120,6 +123,9 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
     if (loading) return <p className="p-4 text-myColor">Caricamento...</p>;
     if (error) return <p className="p-4 text-red-600">Errore: {error}</p>;
 
+    // 1. Ottieni lo stato showPrices dal contesto
+    const { showPrices } = usePriceVisibility();
+
     // NUOVO BLOCCO: Logica di filtraggio
     const filteredArticoli = articoli.filter(article => {
         if (!searchTerm) return true; // Mostra tutto se la ricerca è vuota
@@ -129,7 +135,7 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
         const matches = (
             article.cod.toUpperCase().includes(searchTerm) ||
             article.descrizione.toUpperCase().includes(searchTerm) ||
-            article.prezzo.toString().includes(searchTerm)
+            (showPrices && article.prezzo.toString().includes(searchTerm))
         );
 
         return matches;
@@ -153,20 +159,28 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
         });
     }
 
+    // Definiamo le configurazioni di base per le colonne
+    const baseColumns = [
+        { key: 'cod', label: 'COD' },
+        { key: 'descrizione', label: 'Descrizione' },
+        { key: 'prezzo', label: 'Prezzo' }, // Colonna prezzo da includere/escludere
+    ];
+
+    // 2. Filtra dinamicamente le colonne in base a showPrices
+    const displayedColumns = baseColumns.filter(column =>
+        showPrices || column.key !== 'prezzo'
+    );
+
     return (
         <div className="p-0">
             <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
                 <thead className="bg-myColor text-white">
                 <tr>
                     {/* Definiamo i campi ordinabili e il testo da mostrare */}
-                    {([
-                        { key: 'cod', label: 'COD' },
-                        { key: 'descrizione', label: 'Descrizione' },
-                        { key: 'prezzo', label: 'Prezzo' },
-                    ] as { key: SortKey, label: string }[]).map(({ key, label }) => (
+                    {(displayedColumns as { key: SortKey, label: string }[]).map(({ key, label }) => (
                         <th
                             key={key}
-                            onClick={() => handleSort(key)} // NUOVO: Aggiungi l'handler di click
+                            onClick={() => handleSort(key)}
                             className="py-2 px-4 text-left cursor-pointer hover:bg-myColor/80 transition duration-150"
                         >
                             <div className="flex items-center">
@@ -199,16 +213,20 @@ const TabellaArticoli: React.FC<TabellaArticoliProps> = ({ onArticleSelect, sele
                             ? 'bg-yellow-100 border-yellow-400 font-semibold' // Evidenzia se selezionato
                             : 'hover:bg-gray-50'}`} // Classe standard
                     >
-                        {/* RIGHE MODIFICATE: Applica highlightMatch a tutte le celle */}
+                        {/* Righe fisse */}
                         <td className="py-2 px-4">{highlightMatch(c.cod)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.descrizione)}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.prezzo.toString())}€</td>
+
+                        {/* 4. Cella del Prezzo: Visualizzazione Condizionale */}
+                        {showPrices && (
+                            <td className="py-2 px-4">{highlightMatch(c.prezzo.toString())}€</td>
+                        )}
                     </tr>
                 ))}
                 {/* NUOVO BLOCCO: Messaggio se la ricerca non trova nulla */}
                 {filteredArticoli.length === 0 && searchTerm && (
                     <tr>
-                        <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan={displayedColumns.length} className="py-4 px-4 text-center text-gray-500">
                             Nessun risultato trovato per "{searchTerm}"
                         </td>
                     </tr>

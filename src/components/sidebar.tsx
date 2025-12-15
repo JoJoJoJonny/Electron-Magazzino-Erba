@@ -3,6 +3,8 @@ import { NavLink } from "react-router-dom";
 
 import Logo from "@/assets/logo nuovo.png";
 
+import {usePriceVisibility} from "@/components/priceVisibilityContext.tsx";
+
 const menuItems = [
     { name: "Clienti", path: "/clienti", separatorAfter: false },
     { name: "Articoli", path: "/articoli", separatorAfter: true }, // Separatore 1: dopo Articoli
@@ -15,6 +17,30 @@ const menuItems = [
     { name: "Transazioni", path: "/transazioni", separatorAfter: false },
     { name: "Statistiche", path: "/statistiche", separatorAfter: false },
 ];
+
+const PriceVisibilityToggle = () => {
+    // 1. Ottieni lo stato e il toggler dal contesto
+    const { showPrices, togglePrices } = usePriceVisibility();
+
+    return (
+        // Lo stile è pensato per abbinarsi al tema della tua sidebar
+        <div className="mt-auto pt-4 border-t border-white/20 w-full flex items-center justify-between px-4">
+            <span className="text-sm font-light">Mostra Prezzi</span>
+
+            {/* 2. Implementazione semplificata dello slider (checkbox) */}
+            <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={showPrices}
+                    onChange={togglePrices}
+                    className="sr-only peer"
+                />
+                {/* Stili per il "track" dello slider (stile semplice Tailwind) */}
+                <div className="w-9 h-5 bg-myColor-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-myColor-foreground"></div>
+            </label>
+        </div>
+    );
+};
 
 export const Sidebar = () => {
     return (
@@ -31,7 +57,7 @@ export const Sidebar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `block px-4 py-2 rounded hover:bg-myColor-foreground transition ${
+                            `block px-4 py-1 rounded hover:bg-myColor-foreground transition ${
                                 isActive ? "bg-myColor-foreground" : ""
                             }`
                         }
@@ -41,10 +67,13 @@ export const Sidebar = () => {
 
                     {/*separatore*/}
                     {item.separatorAfter && (
-                        <div className="border-t border-white/20 w-11/12 mx-auto my-3" />
+                        <div className="border-t border-white/20 w-11/12 mx-auto my-1" />
                     )}
                 </React.Fragment>
             ))}
+
+
+            <PriceVisibilityToggle />
         </div>
     );
 };

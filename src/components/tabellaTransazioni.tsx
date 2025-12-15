@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 // Importiamo l'interfaccia TransazioneRecord dal componente padre
 import { TransazioneRecord } from '@/pages/transazioni';
 
+import {usePriceVisibility} from "@/components/priceVisibilityContext.tsx";
+
 // Definisci le props che riceverà TabellaTransazioni dal genitore
 interface TabellaTransazioniProps {
     // Funzione chiamata quando un transazione viene selezionato (o deselezionato)
@@ -120,6 +122,8 @@ const TabellaTransazioni: React.FC<TabellaTransazioniProps> = ({ onTransactionSe
     if (loading) return <p className="p-4 text-myColor">Caricamento...</p>;
     if (error) return <p className="p-4 text-red-600">Errore: {error}</p>;
 
+    const { showPrices } = usePriceVisibility();
+
     // NUOVO BLOCCO: Logica di filtraggio
     const filteredTransazioni = transazioni.filter(transaction => {
         if (!searchTerm) return true; // Mostra tutto se la ricerca è vuota
@@ -132,7 +136,7 @@ const TabellaTransazioni: React.FC<TabellaTransazioniProps> = ({ onTransactionSe
             transaction.codArticolo.toUpperCase().includes(searchTerm) ||
             transaction.quantita.toString().toUpperCase().includes(searchTerm) ||
             transaction.data.toString().toUpperCase().includes(searchTerm) ||
-            transaction.valore.toString().toUpperCase().includes(searchTerm)
+            (showPrices && transaction.valore.toString().toUpperCase().includes(searchTerm))
         );
 
         return matches;
@@ -156,21 +160,28 @@ const TabellaTransazioni: React.FC<TabellaTransazioniProps> = ({ onTransactionSe
         });
     }
 
+    const baseColumns = [
+        { key: 'id', label: 'ID' },
+        { key: 'tipo', label: 'Tipo' },
+        { key: 'ddtCliente', label: 'DDT Cliente' },
+        { key: 'codArticolo', label: 'Cod Articolo' },
+        { key: 'quantita', label: 'Quantità' },
+        { key: 'valore', label: 'Valore' },
+        { key: 'data', label: 'Data e Ora' },
+    ];
+
+    // 2. Filtra dinamicamente le colonne in base a showPrices
+    const displayedColumns = baseColumns.filter(column =>
+        showPrices || column.key !== 'valore'
+    );
+
     return (
         <div className="p-0">
             <table className="w-full bg-white shadow-md rounded-lg overflow-hidden">
                 <thead className="bg-myColor text-white">
                 <tr>
                     {/* Definiamo i campi ordinabili e il testo da mostrare */}
-                    {([
-                        { key: 'id', label: 'ID' },
-                        { key: 'tipo', label: 'Tipo' },
-                        { key: 'ddtCliente', label: 'DDT Cliente' },
-                        { key: 'codArticolo', label: 'Cod Articolo' },
-                        { key: 'quantita', label: 'Quantità' },
-                        { key: 'valore', label: 'Valore' },
-                        { key: 'data', label: 'Data e Ora' },
-                    ] as { key: SortKey, label: string }[]).map(({ key, label }) => (
+                    {(displayedColumns as { key: SortKey, label: string }[]).map(({ key, label }) => (
                         <th
                             key={key}
                             onClick={() => handleSort(key)} // NUOVO: Aggiungi l'handler di click
@@ -247,14 +258,16 @@ const TabellaTransazioni: React.FC<TabellaTransazioniProps> = ({ onTransactionSe
                         <td className="py-2 px-4">{highlightMatch(c.ddtCliente)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.codArticolo)}</td>
                         <td className="py-2 px-4">{highlightMatch(c.quantita.toString())}</td>
-                        <td className="py-2 px-4">{highlightMatch(c.valore.toString())}€</td>
+                        {showPrices &&(
+                            <td className="py-2 px-4">{highlightMatch(c.valore.toString())}€</td>
+                        )}
                         <td className="py-2 px-4">{highlightMatch(c.data.toString())}</td>
                     </tr>
                 ))}
                 {/* NUOVO BLOCCO: Messaggio se la ricerca non trova nulla */}
                 {filteredTransazioni.length === 0 && searchTerm && (
                     <tr>
-                        <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                        <td colSpan={displayedColumns.length} className="py-4 px-4 text-center text-gray-500">
                             Nessun risultato trovato per "{searchTerm}"
                         </td>
                     </tr>
