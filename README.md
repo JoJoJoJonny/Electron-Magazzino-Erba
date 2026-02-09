@@ -1,101 +1,55 @@
-# Bun + Electron + React + Tailwind Boilerplate
-A modern boilerplate to build cross-platform, high-performance desktop applications using Electron, React, Tailwind CSS, and other cutting-edge web development tools.
 
-![AppHome](https://8upload.com//image/6902000b4cc7e/Build_modern_apps.png)
+---
 
-## Features
+# 📦 Warehouse Management System:
+## 📖 Overview
+This project is a simple Warehouse Management System (WMS) developed with Electron, commissioned for managing internal warehouse operations in a simple and intuitive way.
 
-- **ElectronJS**: Cross-platform desktop app development with web technologies.
-- **ReactJS**: Efficient library for building dynamic user interfaces.
-- **TailwindCSS**: Utility-first CSS framework for fast UI development.
-- **ShadcnUI**: Reusable and customizable components to speed up development.
-- **Vite**: Lightning-fast development server with hot module replacement (HMR).
-- **Vitest**: Fast and simple unit testing for React components.
-- **React Testing Library**: Helps test React components in a user-centric way.
-- **Happy DOM**: A fast DOM simulation for testing React components.
-- **BiomeJS**: A fast and reliable linter and code formatter for consistent code style.
+The application was designed with a strong focus on usability and clarity, ensuring that day-to-day warehouse activities can be handled quickly without unnecessary complexity.
 
-## Getting Started
+## 🎯 Purpose
+The software allows the management of:
+- 👥 Customer management
+- 📦 Finished products
+- 🏗️ Semi-finished products
+- 🧱 Raw materials
+- 📑 Incoming and outgoing goods
 
-1. Clone or Fork the Repository
+The main objective was to provide a clear, lightweight, and easy-to-use tool for tracking stock levels and warehouse transactions, minimizing friction for non-technical users.
 
-You can either use this template by clicking the "Use this template" button or clone the repository to your local machine:
-```bash
-git clone https://github.com/Molizanee/electron-react-tailwind.git && cd electron-react-tailwind
-```
+The core philosophy behind the project is:
 
-2. Install Dependencies
+**Keep it simple, fast, and functional**
 
-Once inside the project directory, install all required dependencies:
-```bash
-bun i
-```
+---
 
-3. Run the Development Server
+# 🖥️ Application Screens:
 
-Start the project in development mode with hot-reloading enabled:
-```bash
-bun dev
-```
+![homepage](screenshots/homepage.png)
 
-4. Run Tests
+![clienti](screenshots/clienti.png)
 
-Run all tests with Vitest:
-```bash
-bun run test
-```
+![clienti2](screenshots/clienti2.png)
 
-To open the Vitest UI for a visual overview of your tests:
-```bash
-bun run test:ui
-```
+![articoli](screenshots/prodotti.png)
 
-5. Build the Web Application
+![prodotti](screenshots/prodotti.png)
 
-To build the web version for production:
-```bash
-bun run build:web
-```
+![prodotti2](screenshots/prodotti2.png)
 
-6. Build the Desktop Application
+![semilavorati](screenshots/semilavorati.png)
 
-To build the desktop application for distribution:
-```bash
-bun run build:desktop
-```
+![semilavorati2](screenshots/semilavorati2.png)
 
-7. Start the Web Application
+![transazioni](screenshots/transazioni.png)
 
-To preview the built web application:
-```bash
-bun run start:web
-```
+![statistiche](screenshots/statistiche.png)
 
-8. Start the Desktop Application
+---
 
-To run the built desktop application:
-```bash
-bun run start:desktop
-```
+# 🔀 Repository Information:
+This repository represents a fork of another existing repository, used as a boilerplate, adapted and extended to meet specific project requirements.
 
-9. Lint the Code
+Additional customizations and improvements were implemented on top of the original codebase to align the application with the requested warehouse management features.
 
-To check and fix code style issues:
-```bash
-bun run lint
-```
-
-10. Run Tests with Coverage
-
-To run tests and generate coverage reports:
-```bash
-bun run coverage
-```
-
-## License
-
-This project is licensed under the MIT License.
-
-## Contributions
-
-Feel free to contribute! Please submit a pull request or open an issue for any changes or improvements.
+---
