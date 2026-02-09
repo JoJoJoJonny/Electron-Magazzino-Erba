@@ -50,6 +50,8 @@ The core philosophy behind the project is:
 # 🔀 Repository Information:
 This repository represents a fork of another existing repository, used as a boilerplate, adapted and extended to meet specific project requirements.
 
+[Bun + Electron + React + Tailwind Boilerplate](https://github.com/Molizanee/electron-react-tailwind)
+
 Additional customizations and improvements were implemented on top of the original codebase to align the application with the requested warehouse management features.
 
 ---
